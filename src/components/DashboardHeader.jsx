@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'motion/react';
-import { Sun, Moon, Flame, LogOut, Menu } from 'lucide-react';
+import { Sun, Moon, Flame, LogOut, Menu, ShoppingBag } from 'lucide-react';
 import { playClickFeedback } from '../utils/audio';
 
 export default function DashboardHeader({
@@ -10,8 +10,8 @@ export default function DashboardHeader({
   userEmail = 'eduianbf@gmail.com',
   onLogout,
   onOpenSidebar,
+  onOpenShop, // Adicionado aqui para receber a ação do App.jsx
 }) {
-  // Extrai a parte antes do '@' e capitaliza a primeira letra (ex: eduianbf -> Eduianbf)
   const nameFromEmail = userEmail ? userEmail.split('@')[0] : 'Produtor';
   const capitalizedName = nameFromEmail.charAt(0).toUpperCase() + nameFromEmail.slice(1);
 
@@ -36,20 +36,13 @@ export default function DashboardHeader({
           <Menu size={18} />
         </motion.button>
 
-        {/* Animação da Nova Logo hospedada */}
         <motion.div 
           animate={{ rotate: [0, 5, -5, 0] }}
           transition={{ repeat: Infinity, duration: 6, ease: "easeInOut" }}
           className="w-12 h-12 flex items-center justify-center shrink-0"
         >
-          <img 
-            src="https://i.imgur.com/fYf9NPK.png" 
-            alt="Foca Aqui" 
-            className="w-20 h-20 object-contain rounded-xl" 
-          />
+          <img src="https://i.imgur.com/8NisBqO.png" alt="Foca Aqui" className="w-10 h-10 object-contain" />
         </motion.div>
-
-        {/* Estrutura do Texto da Saudação Dividida */}
         <div>
           <h1 className="text-xl md:text-2xl font-display font-extrabold text-brand-text leading-tight">
             Olá,
@@ -74,6 +67,20 @@ export default function DashboardHeader({
           </motion.div>
           <span className="text-xs font-mono font-bold">{streak} Dias de Streak</span>
         </motion.div>
+
+        {/* Ícone de Loja/Mercado integrado diretamente ao design do painel */}
+        <motion.button
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          onClick={() => {
+            playClickFeedback();
+            onOpenShop(); // Dispara o modal nativo do App.jsx
+          }}
+          className="p-3 bg-brand-bg hover:bg-brand-text/5 border border-brand-border rounded-xl text-brand-text flex items-center justify-center cursor-pointer transition-colors"
+          title="Abrir Mercado"
+        >
+          <ShoppingBag size={18} className="text-amber-500" />
+        </motion.button>
 
         <motion.button
           whileHover={{ scale: 1.05 }}

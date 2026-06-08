@@ -161,7 +161,7 @@ export default function App() {
     window.addEventListener('hashchange', handleHashChange);
     return () => window.removeEventListener('hashchange', handleHashChange);
   }, [screen]);
-
+// === COLE ESTE BLOCO SUBSTITUINDO AS SUAS LINHAS ANTIGAS ===
   const isShopOpen = currentHash === '#/mercado';
   const isNavOpen = ['#/perfil', '#/rank', '#/social', '#/inventario', '#/amigos', '#/suporte'].includes(currentHash);
 
@@ -172,7 +172,7 @@ export default function App() {
   const setIsNavOpen = (open) => {
     window.location.hash = open ? '/perfil' : '/dashboard';
   };
-
+  // ============================================================
   useEffect(() => {
     if (isNavOpen || isShopOpen) {
       document.body.style.overflow = 'hidden';
@@ -1194,20 +1194,16 @@ export default function App() {
           streak={stats.currentStreak}
           userEmail={user?.email || 'eduianbf@gmail.com'}
           onOpenSidebar={() => setIsNavOpen(true)}
+          onOpenShop={() => setIsShopOpen(true)}
           onLogout={async () => {
             if (isConfigured && auth) {
-              try {
-                await auth.signOut();
-              } catch (err) {
-                console.error("Error signing out:", err);
-              }
+              try { await auth.signOut(); } catch (err) { console.error("Error signing out:", err); }
             }
             setUser(null);
             localStorage.removeItem('foca_user');
             setScreen('landing');
           }}
         />
-
         {/* 2. Grades (Grids) de layout estilo editorial */}
         <div className="space-y-10">
           
