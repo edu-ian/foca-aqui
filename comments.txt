@@ -1,0 +1,152 @@
+src/components/AnalyticsReports.tsx:22:  // Convert minutes to a friendly string (ex: "1h 45m" or "45m")
+src/components/AnalyticsReports.tsx:32:      // Show every 3rd day to avoid label overlap in standard layouts
+src/components/AnalyticsReports.tsx:35:        value: Math.round((item.minutes / 60) * 10) / 10, // hours
+src/components/AnalyticsReports.tsx:46:    // Default week
+src/components/AnalyticsReports.tsx:61:  // Quick stats values
+src/components/AnalyticsReports.tsx:64:  // Custom tooltips for recharts to fit theme exactly
+src/components/HeroPage.tsx:43:  // Common motion variant for scroll animations
+src/components/HeroPage.tsx:51:        ease: [0.16, 1, 0.3, 1], // Custom sophisticated cubic bezier
+src/components/TodoList.tsx:34:  // Pagination
+src/components/TodoList.tsx:54:    setCurrentPage(1); // Back to page 1 on add
+src/components/TodoList.tsx:68:  // Filter tasks
+src/components/TodoList.tsx:75:  // Calculate total pages for pagination
+src/components/TodoList.tsx:77:  // Safe bounds check
+src/components/PomodoroTimer.tsx:22:  // Timer durations (in minutes)
+src/components/PomodoroTimer.tsx:35:  // Input states for settings form
+src/components/PomodoroTimer.tsx:42:  // Sync timeLeft when durations or mode change (only if not running)
+src/components/PomodoroTimer.tsx:49:  // Main tick effect
+src/components/PomodoroTimer.tsx:80:    // Notify parent
+src/components/PomodoroTimer.tsx:84:    // Automatically switch states
+src/components/PomodoroTimer.tsx:143:  // Calculate matching circular progress indicator values
+src/components/PetStatus.tsx:24:  // Eye blinking cycle
+src/components/PetStatus.tsx:33:  // Determine speech bubble text in Portuguese
+src/components/PetStatus.tsx:47:    // Increment clicks and trigger funny sound or hearts
+src/components/PetStatus.tsx:50:    // Spawn a floating heart
+src/components/PetStatus.tsx:62:  // Helper to resolve icon inside inventory
+src/components/PetStatus.tsx:76:  // Convert Equipped Skin ID to text label
+src/components/PetStatus.tsx:87:  // Filter actual clothing skins or sounds bought
+src/components/PetStatus.tsx:90:  // Body color based on status
+src/components/PetStatus.tsx:92:    if (pet.status === 'dead') return '#94a3b8'; // pale dead gray
+src/components/PetStatus.tsx:93:    return '#e2e8f0'; // pure cute gray
+src/components/PetStatus.tsx:165:              : { y: [0, -4, 0] } // Idle breathing
+src/components/PetStatus.tsx:266:              // Dead Cross eyes (X X)
+src/components/PetStatus.tsx:274:              // Blink flat closed bars
+src/components/PetStatus.tsx:280:              // Concentration lines
+src/components/PetStatus.tsx:286:              // Sleeping lines
+src/components/PetStatus.tsx:292:              // Happy smile curves
+src/components/PetStatus.tsx:298:              // Standard cute default circular eyes
+src/components/PetStatus.tsx:311:              // Sad dead curve
+src/components/ShopModal.tsx:33:  // Disable background page scrolling when Shop modal is open
+src/components/AuthScreen.tsx:89:      // Offline/Local Demo Mode Fallback
+src/components/AuthScreen.tsx:131:      // Offline Demo Google Login
+src/components/NavigationSidebar.tsx:57:  // Monitor URL hash navigation to switch tab on demand
+src/components/NavigationSidebar.tsx:76:    // Synced URL Hash
+src/components/NavigationSidebar.tsx:87:  // Local form states
+src/components/NavigationSidebar.tsx:159:                <h3 className="font-display font-black text-sm uppercase tracking-wider">Painel Global // Foca Aqui</h3>
+src/components/NavigationSidebar.tsx:617:              FOCA AQUI © 2026 // TCC EDUARDO IAN // Eduianbf@gmail.com
+src/utils/audio.ts:17:      // Soothing Buddhist bell style chime with soft attack and warm decay
+src/utils/audio.ts:24:      osc1.frequency.setValueAtTime(329.63, ctx.currentTime); // E4
+src/utils/audio.ts:25:      osc1.frequency.exponentialRampToValueAtTime(440.00, ctx.currentTime + 0.3); // Ramp up to A4
+src/utils/audio.ts:28:      osc2.frequency.setValueAtTime(164.81, ctx.currentTime); // E3 (undertone)
+src/utils/audio.ts:47:      // Classic 8-bit retro coin/level-up chime
+src/utils/audio.ts:52:      // Retro chime arpeggio: C5 -> E5 -> G5 -> C6
+src/utils/audio.ts:67:      // Standard modern alarm "pling-pling" High Pitch Ping
+src/utils/audio.ts:73:      osc1.frequency.setValueAtTime(880, ctx.currentTime); // A5
+src/utils/audio.ts:74:      osc1.frequency.setValueAtTime(987.77, ctx.currentTime + 0.1); // B5
+src/utils/audio.ts:75:      osc1.frequency.setValueAtTime(880, ctx.currentTime + 0.2); // A5
+src/utils/audio.ts:78:      osc2.frequency.setValueAtTime(1320, ctx.currentTime); // E6 helper third harmony
+src/utils/audio.ts:121:    // Slurp error quietly
+src/types.ts:26:  purchased: boolean; // For skins/sounds
+src/types.ts:27:  equipped?: boolean; // For skins/sounds
+src/types.ts:28:  quantity?: number; // For consumables
+src/types.ts:29:  weeklyPurchasedCount?: number; // For revive potion tracking
+src/types.ts:37:  energy: number; // 0 to 100
+src/types.ts:38:  skin: string; // 'skin_padrao' | 'skin_ninja' | 'skin_astronauta' | 'skin_mago'
+src/types.ts:40:  lastEnergyDeductionTime?: string; // ISO string
+src/types.ts:49:  weeklyFocus: { day: string; minutes: number }[]; // 7 days (Mon-Sun)
+src/types.ts:50:  monthlyFocus: { date: string; minutes: number }[]; // days of the month
+src/types.ts:51:  yearlyFocus: { month: string; minutes: number }[]; // 12 months
+src/types.ts:70:  currentTimer: number; // in seconds
+src/index.css:1:@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap');
+src/App.tsx:38:// Helper recursive normalization utility for key-order resilient state comparison
+src/App.tsx:54:  // Navigation & Screen Control
+src/App.tsx:55:  // 'landing' -> Landing explanation page
+src/App.tsx:56:  // 'auth' -> Visual login / Account setup page
+src/App.tsx:57:  // 'app' -> Operational dashboard page
+src/App.tsx:63:  // Current logged in user info
+src/App.tsx:69:  // Current logged in theme inside app: 'light' | 'dark'
+src/App.tsx:75:  // Productivity tasks state
+src/App.tsx:81:  // General user indicators and coin economics
+src/App.tsx:87:  // Companion foca virtual characteristics
+src/App.tsx:104:  // Rewards shop state
+src/App.tsx:110:        // Filter out deprecated 'sound' or raw 'Alarme' / 'Tema' if user had old ones
+src/App.tsx:113:        // Merge in any new INITIAL_SHOP_ITEMS
+src/App.tsx:126:  // Friends & Social rooms local simulation support
+src/App.tsx:156:  // Hash Routing system supporting multi-route navigation for full performance unmounting
+src/App.tsx:194:  // Track the last state synchronized from/to Firestore to avoid write feedback loops
+src/App.tsx:197:  // Helper to sync local state back to Firestore
+src/App.tsx:213:  // Debounced auto-sync hook to keep Firestore updated without spamming writes during fast events
+src/App.tsx:235:    }, 1000); // 1000ms debounce is exceptionally safe and highly performant
+src/App.tsx:240:  // 1. Listen to auth state changes from Firebase
+src/App.tsx:263:  // 2. Load and Sync User Profile (Stats, Pet State, Shop Items) with Firestore
+src/App.tsx:274:        // Check connectivity as required by SKILL.md
+src/App.tsx:286:          // If profile doc doesn't exist yet, seed it with current local state
+src/App.tsx:298:          // Sync immediate values
+src/App.tsx:306:        // Setup live subscription
+src/App.tsx:309:            // Local write has update; skip listening feedback to avoid loop
+src/App.tsx:338:  // 3. Load and Sync User Tasks with Firestore
+src/App.tsx:351:          // Seed Firestore with local tasks
+src/App.tsx:358:        // Setup live tasks subscription
+src/App.tsx:360:          if (snap.metadata.hasPendingWrites) return; // Skip local write loop feedbacks
+src/App.tsx:365:          // Sort tasks by creation date
+src/App.tsx:384:  // 4. Load & Sync Social Co-working Sessions in Real-time
+src/App.tsx:412:  // Sync state changes with localStorage
+src/App.tsx:453:  // Alert dismisser
+src/App.tsx:467:  // ----------------------------------------------------
+src/App.tsx:468:  // CONTINUOUS PET ENERGY DECAY & DEATH TIMING LOGIC
+src/App.tsx:469:  // ----------------------------------------------------
+src/App.tsx:476:      // Look up tracking markers
+src/App.tsx:483:      // 1. Check Death constraints (48h without energy increments = DEAD)
+src/App.tsx:499:      // 2. Perform regular decay (2.1 energy lost per operational hour)
+src/App.tsx:517:    // Run once on load
+src/App.tsx:520:    // Trigger decay calculation interval every 60 seconds
+src/App.tsx:525:  // POMODORO CYCLES FINISHED
+src/App.tsx:527:    // Coins awarded EXCLUSIVELY via Pomodoro focus, earning exactly 1 coin per focused minute
+src/App.tsx:532:    // Reset death timing since user logged focus accomplishments
+src/App.tsx:535:    // 1. Update stats
+src/App.tsx:542:      const todayIndex = new Date().getDay(); // 0 is Sun, 1 is Mon...
+src/App.tsx:543:      const mappedIndex = todayIndex === 0 ? 6 : todayIndex - 1; // map to Mon-Sun
+src/App.tsx:557:    // 2. Adjust Pet XP/Level/Energy
+src/App.tsx:559:      if (prev.status === 'dead') return prev; // dead can't gain XP
+src/App.tsx:598:    // Automatically reward Pomodoro segments specifically to the active unfinished task if exists
+src/App.tsx:614:            // Also write updated task to Firestore!
+src/App.tsx:633:    // Restore companion back to normal after 4 seconds
+src/App.tsx:656:  // METAS ADD & UPDATE (No more coin farming on complete)
+src/App.tsx:680:    // Commit task drains slight companion focus dedication (no death)
+src/App.tsx:718:            // Completed! Reward Energy (BUT NO COINS as requested!)
+src/App.tsx:724:            // Mark tracking received marker
+src/App.tsx:731:            // Revert happy pose shortly
+src/App.tsx:805:  // VIRTUAL STORE BUSINESS
+src/App.tsx:815:    // Weekly Revive Potion purchases restriction
+src/App.tsx:823:    // Deduct coins
+src/App.tsx:826:    // Increment item count or unlock
+src/App.tsx:849:  // EQUIP UNLOCKED
+src/App.tsx:885:  // CONSUME INVENTORY ITEMS (Food for energy / Potions to revive / Mystery Boxes for random surprises)
+src/App.tsx:944:        quantityGained = 2; // give 2
+src/App.tsx:959:  // SOCIAL FRIENDS LIST IMPLEMENTATION
+src/App.tsx:964:    // Create random user buddy
+src/App.tsx:1013:      // Remove ourselves from the participant list in Firestore
+src/App.tsx:1036:    // Add ourselves to the participant list in Firestore
+src/App.tsx:1065:  // Handle successful logins/signups
+src/App.tsx:1070:    // Explicitly seed/merge local data in Firestore BEFORE altering screen to ensure no loss of offline progression!
+src/App.tsx:1077:          // If no cloud data exists, seed with current local state
+src/App.tsx:1089:          // Seed any guest tasks to Firestore
+src/App.tsx:1098:          // Cloud data exists. Fetch cloud profile
+src/App.tsx:1126:  // Render auth screen trigger
+src/App.tsx:1136:  // Render landing screen trigger
+src/App.tsx:1192:            FOCA AQUI BETA // FAIXA SOCIAL
+src/App.tsx:1335:          Foca Aqui &copy; {new Date().getFullYear()} - Gamificação de Resultados da Atenção // TCC Eduardo
+src/data.ts:49:  // Foods
+src/data.ts:100:  // Drinks
+src/data.ts:141:  // Special
+src/lib/firebase.ts:32:// Custom handlers as required by the Firebase Integration SKILL.md

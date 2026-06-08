@@ -1,0 +1,6 @@
+{
+  "name": "Foca Aqui",
+  "description": "Um aplicativo de produtividade gamificado com foco em Pomodoro, To-Do List, Pet Virtual e relatórios detalhados.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

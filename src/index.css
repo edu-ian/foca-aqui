@@ -1,0 +1,91 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Space Grotesk", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+}
+
+/* Base custom theme properties */
+:root {
+  --transition-speed: 0.4s;
+}
+
+/* Custom background textures */
+.bg-hero-dots {
+  background-image: radial-gradient(rgba(248, 246, 240, 0.15) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+.bg-texture-dark {
+  background-image: radial-gradient(rgba(248, 246, 240, 0.05) 1.2px, transparent 1.2px);
+  background-size: 20px 20px;
+}
+
+.bg-texture-light {
+  background-image: radial-gradient(rgba(0, 2, 47, 0.05) 1.2px, transparent 1.2px);
+  background-size: 20px 20px;
+}
+
+/* Base theme definitions */
+.theme-dark {
+  --color-brand-bg: #00022f;
+  --color-brand-card: #080a3c;
+  --color-brand-text: #F8F6F0;
+  --color-brand-text-muted: rgba(248, 246, 240, 0.6);
+  --color-brand-border: rgba(248, 246, 240, 0.12);
+}
+
+.theme-light {
+  --color-brand-bg: #F8F6F0;
+  --color-brand-card: #ffffff;
+  --color-brand-text: #00022f;
+  --color-brand-text-muted: rgba(0, 2, 47, 0.6);
+  --color-brand-border: rgba(0, 2, 47, 0.12);
+}
+
+/* Utility classes map dynamically to variables */
+.bg-brand-bg {
+  background-color: var(--color-brand-bg);
+  transition: background-color var(--transition-speed) cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.bg-brand-card {
+  background-color: var(--color-brand-card);
+  transition: background-color var(--transition-speed) cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.text-brand-text {
+  color: var(--color-brand-text);
+  transition: color var(--transition-speed) cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.text-brand-muted {
+  color: var(--color-brand-text-muted);
+  transition: color var(--transition-speed) cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.border-brand-border {
+  border-color: var(--color-brand-border);
+  transition: border-color var(--transition-speed) cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Custom scrollbar adjustments */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-brand-border);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-brand-text-muted);
+}
