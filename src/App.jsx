@@ -99,8 +99,8 @@ const [shopItems, setShopItems] = useState(() => {
   const [friends, setFriends] = useState(() => {
     const saved = localStorage.getItem('foca_friends');
     return saved ? JSON.parse(saved) : [
-      { uid: 'friend-1', username: 'LucasGamer', level: 4, coins: 150, focusMinutes: 45 },
-      { uid: 'friend-2', username: 'Mariana_Estudos', level: 6, coins: 340, focusMinutes: 80 }
+      { uid: 'friend-1', username: 'Jeferson(teste)', level: 20, coins: 157, focusMinutes: 45 },
+      { uid: 'friend-2', username: 'Mariana_Estudos(teste)', level: 100, coins: 420, focusMinutes: 80 }
     ];
   });
   //  FORÇA A LIMPEZA E RECARGA DOS ITENS DO MERCADO (remova depois que funcionar)
