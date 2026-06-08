@@ -1,15 +1,9 @@
-/**
- * @license
- * SPDX-License-Identifier: Apache-2.0
- */
 
-import { ShopItem, Task, UserStats } from './types';
 
-export const INITIAL_SHOP_ITEMS: ShopItem[] = [
+export const INITIAL_SHOP_ITEMS = [
   {
     id: 'skin_ninja',
     name: 'Foca Ninja',
-    type: 'skin',
     price: 80,
     description: 'Um traje furtivo para focar nas sombras e fatiar a procrastinação.',
     iconName: 'Shield',
@@ -19,7 +13,6 @@ export const INITIAL_SHOP_ITEMS: ShopItem[] = [
   {
     id: 'skin_astronauta',
     name: 'Foca Astronauta',
-    type: 'skin',
     price: 150,
     description: 'Roupa espacial de ponta para foco de outro mundo!',
     iconName: 'Rocket',
@@ -29,7 +22,6 @@ export const INITIAL_SHOP_ITEMS: ShopItem[] = [
   {
     id: 'skin_mago',
     name: 'Foca Mago',
-    type: 'skin',
     price: 220,
     description: 'Convoque feitiços de altíssima produtividade com este manto arcano.',
     iconName: 'Sparkles',
@@ -38,19 +30,17 @@ export const INITIAL_SHOP_ITEMS: ShopItem[] = [
   },
   {
     id: 'skin_oculos',
-    name: 'Juliete de Funkeiro',
-    type: 'skin',
+    name: 'Juliete estilosa',
     price: 60,
     description: 'Um acessório chave para deixar sua foca com o puro estilo das ruas.',
     iconName: 'Palette',
     purchased: false,
     equipped: false,
   },
-  // ITENS ALIMENTARES. Consumíveis p/ Nutrição ou Engajamentos energéticos! 
+  // Consumíveis p/ Nutrição ou Engajamentos energéticos! 
   {
     id: 'food_pao_queijo',
     name: 'Pão de queijo',
-    type: 'food',
     price: 10,
     description: 'Recupera +15 de Energia. Um clássico quentinho.',
     iconName: 'Shield',
@@ -60,7 +50,6 @@ export const INITIAL_SHOP_ITEMS: ShopItem[] = [
   {
     id: 'food_pizza',
     name: 'Pizza',
-    type: 'food',
     price: 25,
     description: 'Recupera +35 de Energia. Deliciosa fatia cheia de queijo.',
     iconName: 'Shield',
@@ -70,7 +59,6 @@ export const INITIAL_SHOP_ITEMS: ShopItem[] = [
   {
     id: 'food_hamburguer',
     name: 'Hambúrguer Rei',
-    type: 'food',
     price: 35,
     description: 'Recupera +50 de Energia. Refeição dos campeões.',
     iconName: 'Shield',
@@ -80,7 +68,6 @@ export const INITIAL_SHOP_ITEMS: ShopItem[] = [
   {
     id: 'food_churrasco',
     name: 'Churrasquinho',
-    type: 'food',
     price: 30,
     description: 'Recupera +45 de Energia. Feito na brasa.',
     iconName: 'Shield',
@@ -90,18 +77,16 @@ export const INITIAL_SHOP_ITEMS: ShopItem[] = [
   {
     id: 'food_salada',
     name: 'Salada',
-    type: 'food',
     price: 15,
     description: 'Recupera +20 de Energia. Prato de verduras focado na saúde.',
     iconName: 'Shield',
     purchased: false,
     quantity: 0,
   },
-  // ITENS HIDRO-DRINKS (BEBIDAS). Consumíveis focados  em Energia Rápida ou Foco Imediato p/ Mascote!
+  // Consumíveis focados  em Energia Rápida ou Foco Imediato p/ Mascote!
   {
     id: 'drink_cafe',
     name: 'Cafezinho',
-    type: 'food',
     price: 15,
     description: 'Recupera +20 de Energia. Uma dose dupla de cafeína pura.',
     iconName: 'Rocket',
@@ -111,7 +96,6 @@ export const INITIAL_SHOP_ITEMS: ShopItem[] = [
   {
     id: 'drink_energetico_red',
     name: 'Energético Touro Vermelho',
-    type: 'food',
     price: 25,
     description: 'Recupera +35 de Energia. Te dá asas virtuais.',
     iconName: 'Rocket',
@@ -121,7 +105,6 @@ export const INITIAL_SHOP_ITEMS: ShopItem[] = [
   {
     id: 'drink_energetico_monster',
     name: 'Energético Monstruoso',
-    type: 'food',
     price: 35,
     description: 'Recupera +50 de Energia. Dose letal de foco e produtividade.',
     iconName: 'Rocket',
@@ -131,18 +114,16 @@ export const INITIAL_SHOP_ITEMS: ShopItem[] = [
   {
     id: 'drink_refri_cola',
     name: 'Refrigerante Cola Misterioso',
-    type: 'food',
     price: 20,
     description: 'Recupera +30 de Energia. Açúcar rápido para a mente.',
     iconName: 'Rocket',
     purchased: false,
     quantity: 0,
   },
-  // ACERVO DOS ITENS ESPECIAIS & CURIOSOS (Especais) -  Itens de Surpresa Poções ou Outros.
+  // Itens mystery_box e potion_revive
   {
     id: 'mystery_box',
     name: 'Caixa Misteriosa',
-    type: 'mystery_box',
     price: 30,
     description: 'Pode vir comida, bebida ou com 10% de chance, a sagrada Poção de Reviver!',
     iconName: 'Sparkles',
@@ -152,7 +133,6 @@ export const INITIAL_SHOP_ITEMS: ShopItem[] = [
   {
     id: 'potion_revive',
     name: 'Poção de Reviver',
-    type: 'potion',
     price: 300,
     description: 'Ressuscita uma Foca abatida imediatamente. (Estoque: Limite de 2 por semana)',
     iconName: 'Bell',
@@ -163,7 +143,6 @@ export const INITIAL_SHOP_ITEMS: ShopItem[] = [
   {
     id: 'skin_ninja',
     name: 'Foca das Sombras',
-    type: 'skin',
     price: 80,
     description: 'Transforma sua foca em um Ninja Silencioso. Mais foco, menos distrações.',
     iconName: 'Shield',
@@ -173,7 +152,6 @@ export const INITIAL_SHOP_ITEMS: ShopItem[] = [
   {
     id: 'skin_dev',
     name: 'Foca Desenvolvedora',
-    type: 'skin',
     price: 150,
     description: 'Equipada com óculos de nerd e um notebook. Para sprints intensos de código.',
     iconName: 'Zap',
@@ -182,7 +160,7 @@ export const INITIAL_SHOP_ITEMS: ShopItem[] = [
   },
 ];
 
-export const INITIAL_TASKS: Task[] = [
+export const INITIAL_TASKS = [
   {
     id: 'task-1',
     title: 'Estudar conceitos de UX/UI para Bento Grid',
@@ -215,7 +193,7 @@ export const INITIAL_TASKS: Task[] = [
   },
 ];
 
-export const INITIAL_STATS: UserStats = {
+export const INITIAL_STATS = {
   coins: 60,
   focusMinutesToday: 45,
   totalDaysActive: 4,

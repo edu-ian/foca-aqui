@@ -1,52 +1,36 @@
-/**
- * @license
- * SPDX-License-Identifier: Apache-2.0
- */
-
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Play, Pause, RotateCcw, Settings, Volume2, Save, ArrowRight } from 'lucide-react';
 import { playSound, playClickFeedback } from '../utils/audio';
 
-type TimerMode = 'focus' | 'short' | 'long';
-
-interface PomodoroTimerProps {
-  onCycleComplete: (mode: TimerMode, minutes: number) => void;
-  onTimerRunningChange: (isRunning: boolean) => void;
-}
-
 export default function PomodoroTimer({
   onCycleComplete,
   onTimerRunningChange,
-}: PomodoroTimerProps) {
-  // Conjunto / Tabela de Variáveis base p/ durabilidades temporais (Configurada pelos minutos!).
+}) {
   const [durations, setDurations] = useState({
     focus: 25,
     short: 5,
     long: 15,
   });
 
-  const [mode, setMode] = useState<TimerMode>('focus');
+  const [mode, setMode] = useState('focus');
   const [timeLeft, setTimeLeft] = useState(25 * 60);
   const [isRunning, setIsRunning] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [selectedAlarm, setSelectedAlarm] = useState('sound_standard');
 
-  // Estado/inputs utilizados/conectados no Formularios Configuracionais (Setando ou Configurando propriedades)!
   const [inputFocus, setInputFocus] = useState(25);
   const [inputShort, setInputShort] = useState(5);
   const [inputLong, setInputLong] = useState(15);
 
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const intervalRef = useRef(null);
 
-  // Mecanismos ativadores (Cronometro reajustes etc): -> Reajusta valor se houve tempo alterado (Modificação sem Start Inicial Executando).
   useEffect(() => {
     if (!isRunning) {
       setTimeLeft(durations[mode] * 60);
     }
   }, [mode, durations]);
 
-  // Lógica Essêncial do Tick Principal ou do Andar/Girar (Coração Mecânico / Clock principal) de segundos.
   useEffect(() => {
     if (isRunning) {
       onTimerRunningChange(true);
@@ -77,11 +61,9 @@ export default function PomodoroTimer({
     setIsRunning(false);
     playSound(selectedAlarm);
     
-    // Sinalizar Atributos/Comunicações P/ Ancestrais (Parent Components) informativamente. 
     const minutesFocused = durations[mode];
     onCycleComplete(mode, minutesFocused);
     
-    // Função que efetua autônomas alterações! Alterna estados do Temporizados s/ necessidade humana direta.
     if (mode === 'focus') {
       setMode('short');
       setTimeLeft(durations.short * 60);
@@ -102,14 +84,14 @@ export default function PomodoroTimer({
     setTimeLeft(durations[mode] * 60);
   };
 
-  const handleModeChange = (newMode: TimerMode) => {
+  const handleModeChange = (newMode) => {
     playClickFeedback();
     setIsRunning(false);
     setMode(newMode);
     setTimeLeft(durations[newMode] * 60);
   };
 
-  const saveSettings = (e: React.FormEvent) => {
+  const saveSettings = (e) => {
     e.preventDefault();
     playClickFeedback();
     const newFocus = Math.max(1, Math.min(120, inputFocus));
@@ -129,24 +111,22 @@ export default function PomodoroTimer({
     setShowSettings(false);
   };
 
-  const testAlarm = (soundId: string) => {
+  const testAlarm = (soundId) => {
     setSelectedAlarm(soundId);
     playSound(soundId);
   };
 
-  const formatTime = (seconds: number) => {
+  const formatTime = (seconds) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
-  // Calcular o valor métrico adequado / Indicador Circular Geométricos no "Arco/Grau" - Composição percentual vs Barra Completa.
   const totalSeconds = durations[mode] * 60;
   const progressRatio = totalSeconds > 0 ? timeLeft / totalSeconds : 0;
 
   return (
     <div className="p-6 rounded-2xl bg-brand-card border border-brand-border transition-all flex flex-col items-center justify-center relative overflow-hidden h-full shadow-xl hover:shadow-2xl duration-300">
-      {/* Animações Das Circunferencia Ou Fitas Tracejaveis Visual com Cores Effeito Neons , No Entorno Dos Cronometors Em Momento Ou Estado  "Desejavel Da Focus Active E  Estudando." */}
       <AnimatePresence>
         {isRunning && (
           <motion.div
@@ -185,7 +165,6 @@ export default function PomodoroTimer({
             exit={{ opacity: 0, scale: 0.98 }}
             className="w-full flex flex-col items-center"
           >
-            {/* Area De Selector / (Abas e Botões Em Linhas "Tabs") De Escolhas De  Configuacoes (Modalidade 1 (O pomodoro) || Modalidade 2 (As Pausas Etc.)  ). */}
             <div className="flex gap-1.5 p-1 bg-brand-bg border border-brand-border rounded-xl mb-8">
               {[
                 { id: 'focus', label: 'Foco' },
@@ -194,7 +173,7 @@ export default function PomodoroTimer({
               ].map((tab) => (
                 <button
                   key={tab.id}
-                  onClick={() => handleModeChange(tab.id as TimerMode)}
+                  onClick={() => handleModeChange(tab.id)}
                   className={`px-3 py-1.5 rounded-lg text-xs font-semibold uppercase tracking-wider cursor-pointer transition-all ${
                     mode === tab.id
                       ? 'bg-brand-text text-brand-bg font-bold shadow-sm scale-102'
@@ -206,9 +185,7 @@ export default function PomodoroTimer({
               ))}
             </div>
 
-            {/* Recipiente Geométricos De Containers Do Formatos Circular / Coronal C/ "Radiados Glowing Luzes" Brilhosos Eletromagnèticos, Para O Circulador Central (Aonde Cronometro Fica Envelopado!). */}
             <div className="relative w-56 h-56 flex items-center justify-center mb-8">
-              {/* Trilha Seca E Circulo Vectorizada Sem Preenchimentos! Linha Fundo Guia  Circulo-base Padrões / Anel Para Reprentações Circular  (Rings!) dos Fundos E Cronometro vazio. */}
               <svg className="w-full h-full transform -rotate-90">
                 <circle
                   cx="112"
@@ -233,7 +210,6 @@ export default function PomodoroTimer({
                 />
               </svg>
 
-              {/* Composições E Quadros  De Fonte / Fontes Visuais & Typograficas Centrals Responsavel Exclusio E Especificos "Textos E Numeros Temporizados" !. */}
               <div className="absolute flex flex-col items-center">
                 <span className="font-mono text-5xl font-black tracking-tight text-brand-text">
                   {formatTime(timeLeft)}
@@ -244,7 +220,6 @@ export default function PomodoroTimer({
               </div>
             </div>
 
-            {/* Barramentos, Botoes Da Centralidades Dos "Controllers / Módulos Acionadores Primário" & Contoladores Das Ações Padrões & De Fluxo Do Timer : (E.X. Pausar, Iniciar, Reset) */}
             <div className="flex gap-4 items-center">
               <motion.button
                 whileHover={{ scale: 1.05 }}
@@ -336,7 +311,6 @@ export default function PomodoroTimer({
               </div>
             </div>
 
-            {/* Área Seletiva  Da Interfaces E Configuraçoes Acústica (Definicões E Botõezinhos De Parametrizações E Ativadores Dos Modos Musics ou Sininhos). */}
             <div className="space-y-2 mt-2">
               <label className="text-brand-text/60 text-[10px] uppercase font-mono flex items-center gap-1.5">
                 <Volume2 size={12} />

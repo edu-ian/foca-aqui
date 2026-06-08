@@ -1,13 +1,5 @@
-/**
- * @license
- * SPDX-License-Identifier: Apache-2.0
- */
 
-/**
- * Synthesizes alarms and button feedback sounds on the fly using the Web Audio API. This avoids
- * dependency on external mp3 assets which could fail to load or be blocked by cross-origin policies.
- */
-export function playSound(type: string) {
+export const playSound = (soundId) => {.
   try {
     const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
     if (!AudioContextClass) return;
@@ -75,7 +67,7 @@ export function playSound(type: string) {
       osc1.frequency.setValueAtTime(880, ctx.currentTime + 0.2); // A5
 
       osc2.type = 'sine';
-      osc2.frequency.setValueAtTime(1320, ctx.currentTime); // E6 helper third harmony
+      osc2.frequency.setValueAtTime(1320, ctx.currentTime); // E6 
 
       gain.gain.setValueAtTime(0.2, ctx.currentTime);
       gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.8);
@@ -94,9 +86,8 @@ export function playSound(type: string) {
   }
 }
 
-/**
- * Play a quick, ultra quiet, subtle UI click/focus feedback sound
- */
+//  feedback sonoro
+
 export function playClickFeedback() {
   try {
     const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
@@ -118,6 +109,6 @@ export function playClickFeedback() {
     osc.start();
     osc.stop(ctx.currentTime + 0.06);
   } catch (e) {
-    // Engole erros residuais e silenciosamente aborta sem prejudicamentos fatais! (Erros do browser ou Interfêrencias do Play/Policy / Mutados).
+    // Engole erros residuais e silenciosamente aborta sem prejudicamentos fatais (Erros do browser ou Interfêrencias do Play/Policy / Mutados).
   }
 }

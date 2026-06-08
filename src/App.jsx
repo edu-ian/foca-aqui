@@ -1,8 +1,3 @@
-/**
- * @license
- * SPDX-License-Identifier: Apache-2.0
- */
-
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
@@ -18,7 +13,6 @@ import {
   Menu
 } from 'lucide-react';
 
-import { Task, ShopItem, PetState, UserStats, Friend, SocialSession } from './types';
 import { INITIAL_SHOP_ITEMS, INITIAL_TASKS, INITIAL_STATS } from './data';
 import { playClickFeedback, playSound } from './utils/audio';
 
@@ -36,7 +30,7 @@ import { isConfigured, db, auth, handleFirestoreError, OperationType } from './l
 import { doc, getDoc, getDocs, setDoc, updateDoc, collection, deleteDoc, onSnapshot, query, where, getDocFromServer } from 'firebase/firestore';
 
 // Utilitário auxiliar de normalização recursiva para comparação de estado resiliente à ordem das chaves
-function normalizeState(obj: any): string {
+function normalizeState(obj) {
   if (obj === null || obj === undefined) return '';
   if (typeof obj !== 'object') return String(obj);
   if (Array.isArray(obj)) {
@@ -55,37 +49,37 @@ export default function App() {
   // 'landing' -> Página de explicação (Landing Page)
   // 'auth' -> Página visual de login / criação de conta
   // 'app' -> Página do painel operacional (Dashboard)
-  const [screen, setScreen] = useState<'landing' | 'auth' | 'app'>(() => {
+  const [screen, setScreen] = useState(() => {
     const logged = localStorage.getItem('foca_is_logged_in');
     return logged && JSON.parse(logged) ? 'app' : 'landing';
   });
 
   // Informações do usuário logado atualmente
-  const [user, setUser] = useState<{ email: string; displayName?: string; uid: string } | null>(() => {
+  const [user, setUser] = useState(() => {
     const saved = localStorage.getItem('foca_user');
     return saved ? JSON.parse(saved) : null;
   });
 
   // Tema atualmente utilizado no app: 'light' (claro) | 'dark' (escuro)
-  const [theme, setTheme] = useState<'light' | 'dark'>(() => {
+  const [theme, setTheme] = useState(() => {
     const saved = localStorage.getItem('foca_theme');
-    return saved ? (JSON.parse(saved) as 'light' | 'dark') : 'dark';
+    return saved ? JSON.parse(saved) : 'dark';
   });
 
   // Estado das tarefas de produtividade
-  const [tasks, setTasks] = useState<Task[]>(() => {
+  const [tasks, setTasks] = useState(() => {
     const saved = localStorage.getItem('foca_tasks');
     return saved ? JSON.parse(saved) : INITIAL_TASKS;
   });
 
   // Indicadores gerais do usuário e economia de moedas
-  const [stats, setStats] = useState<UserStats>(() => {
+  const [stats, setStats] = useState(() => {
     const saved = localStorage.getItem('foca_stats');
     return saved ? JSON.parse(saved) : INITIAL_STATS;
   });
 
   // Características do mascote virtual Foca
-  const [pet, setPet] = useState<PetState>(() => {
+  const [pet, setPet] = useState(() => {
     const saved = localStorage.getItem('foca_pet');
     return saved
       ? JSON.parse(saved)
@@ -102,13 +96,13 @@ export default function App() {
   });
 
   // Estado da loja de recompensas
-  const [shopItems, setShopItems] = useState<ShopItem[]>(() => {
+  const [shopItems, setShopItems] = useState(() => {
     const saved = localStorage.getItem('foca_shop_items');
     if (saved) {
       try {
-        const parsed = JSON.parse(saved) as ShopItem[];
+        const parsed = JSON.parse(saved);
         // Filtra 'sound' descontinuado ou termos como 'Alarme' / 'Tema' se o usuário possuir os antigos
-        const noSounds = parsed.filter((i) => i.type !== 'sound' && (i.type as any) !== 'theme' && !i.id.includes('theme') && i.name !== 'Alarme' && i.name !== 'Tema' && !i.name.includes('Tema '));
+        const noSounds = parsed.filter((i) => i.type !== 'sound' && i.type !== 'theme' && !i.id.includes('theme') && i.name !== 'Alarme' && i.name !== 'Tema' && !i.name.includes('Tema '));
         
         // Mescla quaisquer novos itens iniciais da loja (INITIAL_SHOP_ITEMS)
         const merged = [
@@ -124,7 +118,7 @@ export default function App() {
   });
 
   // Suporte à simulação local de amigos e salas conjuntas sociais
-  const [friends, setFriends] = useState<Friend[]>(() => {
+  const [friends, setFriends] = useState(() => {
     const saved = localStorage.getItem('foca_friends');
     return saved ? JSON.parse(saved) : [
       { uid: 'friend-1', username: 'LucasGamer', level: 4, coins: 150, focusMinutes: 45 },
@@ -132,7 +126,7 @@ export default function App() {
     ];
   });
 
-  const [socialSessions, setSocialSessions] = useState<SocialSession[]>(() => {
+  const [socialSessions, setSocialSessions] = useState(() => {
     const saved = localStorage.getItem('foca_sessions');
     return saved ? JSON.parse(saved) : [
       {
@@ -151,7 +145,7 @@ export default function App() {
     ];
   });
 
-  const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
+  const [activeSessionId, setActiveSessionId] = useState(null);
   
   // Sistema de roteamento por Hash com suporte a navegação multi-rota com desempenho total ao desmontar componentes
   const [currentHash, setCurrentHash] = useState(() => window.location.hash || '#/dashboard');
@@ -171,11 +165,11 @@ export default function App() {
   const isShopOpen = currentHash === '#/mercado';
   const isNavOpen = ['#/perfil', '#/rank', '#/social', '#/inventario', '#/amigos', '#/suporte'].includes(currentHash);
 
-  const setIsShopOpen = (open: boolean) => {
+  const setIsShopOpen = (open) => {
     window.location.hash = open ? '/mercado' : '/dashboard';
   };
 
-  const setIsNavOpen = (open: boolean) => {
+  const setIsNavOpen = (open) => {
     window.location.hash = open ? '/perfil' : '/dashboard';
   };
 
@@ -187,15 +181,15 @@ export default function App() {
     }
   }, [isNavOpen, isShopOpen]);
 
-  const [alertNotification, setAlertNotification] = useState<{ message: string; type: 'success' | 'info' } | null>(null);
+  const [alertNotification, setAlertNotification] = useState(null);
 
   const username = user?.displayName || user?.email?.split('@')[0] || pet.name || 'Produtor';
 
   // Rastreia o último estado sincronizado do/para o Firestore para evitar loops de escrita
-  const lastSyncedRef = React.useRef<string>("");
+  const lastSyncedRef = React.useRef("");
 
   // Função auxiliar para sincronizar o estado local de volta ao Firestore
-  const syncUserToFirestore = async (updatedPet: PetState, updatedStats: UserStats, updatedShop: ShopItem[]) => {
+  const syncUserToFirestore = async (updatedPet, updatedStats, updatedShop) => {
     if (!isConfigured || !db || !user?.uid) return;
     try {
       const userDocRef = doc(db, 'users', user.uid);
@@ -241,7 +235,7 @@ export default function App() {
   useEffect(() => {
     if (!isConfigured || !auth) return;
 
-    const unsubscribe = auth.onAuthStateChanged((firebaseUser: any) => {
+    const unsubscribe = auth.onAuthStateChanged((firebaseUser) => {
       if (firebaseUser) {
         const loggedUser = {
           email: firebaseUser.email || '',
@@ -265,7 +259,7 @@ export default function App() {
     const uid = user?.uid;
     if (!isConfigured || !db || !uid) return;
 
-    let unsubscribe: () => void;
+    let unsubscribe;
 
     const setupUserSync = async () => {
       try {
@@ -340,7 +334,7 @@ export default function App() {
     const uid = user?.uid;
     if (!isConfigured || !db || !uid) return;
 
-    let unsubscribe: () => void;
+    let unsubscribe;
 
     const setupTasksSync = async () => {
       try {
@@ -358,9 +352,9 @@ export default function App() {
         // Configura inscrição ao vivo de modificação nas tarefas
         unsubscribe = onSnapshot(tasksCollection, (snap) => {
           if (snap.metadata.hasPendingWrites) return; // Skip local write loop feedbacks
-          const loadedTasks: Task[] = [];
+          const loadedTasks = [];
           snap.forEach((docSnap) => {
-            loadedTasks.push(docSnap.data() as Task);
+            loadedTasks.push(docSnap.data());
           });
           // Classifica as tarefas usando a data de crição
           loadedTasks.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
@@ -385,16 +379,16 @@ export default function App() {
   useEffect(() => {
     if (!isConfigured || !db || !user?.uid) return;
 
-    let unsubscribe: () => void;
+    let unsubscribe;
 
     try {
       const sessionsCollection = collection(db, 'social_sessions');
       const q = query(sessionsCollection, where("isActive", "==", true));
 
       unsubscribe = onSnapshot(q, (snap) => {
-        const loadedSessions: SocialSession[] = [];
+        const loadedSessions = [];
         snap.forEach((docSnap) => {
-          loadedSessions.push(docSnap.data() as SocialSession);
+          loadedSessions.push(docSnap.data());
         });
         setSocialSessions(loadedSessions);
       }, (err) => {
@@ -460,7 +454,7 @@ export default function App() {
     }
   }, [alertNotification]);
 
-  const triggerAlert = (message: string, type: 'success' | 'info' = 'info') => {
+  const triggerAlert = (message, type = 'info') => {
     setAlertNotification({ message, type });
   };
 
@@ -523,7 +517,7 @@ export default function App() {
   }, [screen]);
 
   // FIM DOS CICLOS POMODORO
-  const handleCycleComplete = (mode: 'focus' | 'short' | 'long', minutes: number) => {
+  const handleCycleComplete = (mode, minutes) => {
     // Moedas adquiridas EXCLUSIVAMENTE mediante a foco (pomodoro), rendendo individualmente: 1 moeda / min focado.
     const rewardCoins = mode === 'focus' ? minutes : 0;
     const gainedXp = mode === 'focus' ? 30 : 10;
@@ -533,7 +527,7 @@ export default function App() {
     localStorage.setItem('foca_last_energy_received_time', new Date().toISOString());
 
     // 1. Atualizar e sincronizar a parte estatística em tempo real
-    let nextStats: UserStats;
+    let nextStats;
     setStats((prev) => {
       const updatedCoins = prev.coins + rewardCoins;
       const updatedMinutesToday = prev.focusMinutesToday + (mode === 'focus' ? minutes : 0);
@@ -579,7 +573,7 @@ export default function App() {
         }, 500);
       }
 
-      const nextPet: PetState = {
+      const nextPet = {
         ...prev,
         level: newLevel,
         experience: newXp,
@@ -605,7 +599,7 @@ export default function App() {
           if (!t.completed && !updated) {
             updated = true;
             const newPoms = Math.min(t.estimatedPomodoros, t.completedPomodoros + 1);
-            const updatedT: Task = {
+            const updatedT = {
               ...t,
               completedPomodoros: newPoms,
               completed: newPoms >= t.estimatedPomodoros ? true : t.completed,
@@ -633,7 +627,7 @@ export default function App() {
     // Retrógrada o status animal / das atividades da mascote / acompanhante, passados próximos dos 4S.
     setTimeout(() => {
       setPet((p) => {
-        const nextP = p.status === 'dead' ? p : { ...p, status: 'idle' as const };
+        const nextP = p.status === 'dead' ? p : { ...p, status: 'idle' };
         if (isConfigured && db && user?.uid && p.status !== 'dead') {
           const userDocRef = doc(db, 'users', user.uid);
           updateDoc(userDocRef, { "pet.status": "idle" }).catch((err) => console.error(err));
@@ -643,7 +637,7 @@ export default function App() {
     }, 4000);
   };
 
-  const handleTimerRunningChange = (isRunning: boolean) => {
+  const handleTimerRunningChange = (isRunning) => {
     setPet((prev) => {
       if (prev.status === 'dead') return prev;
       return {
@@ -655,15 +649,15 @@ export default function App() {
 
   // MODIFICAÇOES NOS DADOS DO USUÁRIO & ALÍNEA
   const handleAddTask = async (
-    title: string, 
-    description: string = '', 
-    estimatedPomodoros: number = 2,
-    priority: 'normal' | 'importante' | 'urgente' = 'normal'
+    title, 
+    description = '', 
+    estimatedPomodoros = 2,
+    priority = 'normal'
   ) => {
     const est = Number(estimatedPomodoros);
     const safeEstimated = isNaN(est) || est <= 0 ? 1 : Math.round(est);
 
-    const newTask: Task = {
+    const newTask = {
       id: `task-${Date.now()}`,
       title,
       description,
@@ -676,7 +670,7 @@ export default function App() {
 
     setTasks((prev) => [newTask, ...prev]);
 
-    let nextPet: PetState | null = null;
+    let nextPet = null;
     // Reduz levemente a energia passiva. Condicionado ao comprometimento total das métricas e das atividades criadas (sem afetar mortes)
     setPet((prev) => {
       if (prev.status === 'dead') return prev;
@@ -706,8 +700,8 @@ export default function App() {
     triggerAlert('Nova meta agendada! Prepare-se para focar.', 'info');
   };
 
-  const handleToggleComplete = async (id: string) => {
-    let toggledTask: Task | null = null;
+  const handleToggleComplete = async (id) => {
+    let toggledTask = null;
     
     setTasks((prev) =>
       prev.map((t) => {
@@ -744,11 +738,11 @@ export default function App() {
         const taskDocRef = doc(db, 'users', user.uid, 'tasks', id);
         await setDoc(taskDocRef, toggledTask);
 
-        const nextEnergy = (toggledTask as Task).completed ? Math.min(100, pet.energy + 10) : pet.energy;
+        const nextEnergy = toggledTask.completed ? Math.min(100, pet.energy + 10) : pet.energy;
         const userDocRef = doc(db, 'users', user.uid);
         await updateDoc(userDocRef, {
           "pet.energy": nextEnergy,
-          "pet.status": (toggledTask as Task).completed ? 'happy' : pet.status
+          "pet.status": toggledTask.completed ? 'happy' : pet.status
         });
       } catch (err) {
         handleFirestoreError(err, OperationType.WRITE, `users/${user.uid}/tasks/${id}`);
@@ -756,8 +750,8 @@ export default function App() {
     }
   };
 
-  const handleUpdateTask = async (id: string, updates: Partial<Task>) => {
-    let updatedTask: Task | null = null;
+  const handleUpdateTask = async (id, updates) => {
+    let updatedTask = null;
     
     const sanitizedUpdates = { ...updates };
     if ('estimatedPomodoros' in sanitizedUpdates) {
@@ -787,7 +781,7 @@ export default function App() {
     }
   };
 
-  const handleDeleteTask = async (id: string) => {
+  const handleDeleteTask = async (id) => {
     setTasks((prev) => prev.filter((t) => t.id !== id));
     
     if (isConfigured && db && user?.uid) {
@@ -803,7 +797,7 @@ export default function App() {
   };
 
   // SETOR DE ADMINISTRAÇÃO E COMÈRSIO (Loja Visual/Itens Virtuais/Etc...)
-  const handleBuyItem = (itemId: string) => {
+  const handleBuyItem = (itemId) => {
     const item = shopItems.find((i) => i.id === itemId);
     if (!item) return;
 
@@ -847,7 +841,7 @@ export default function App() {
   };
 
   // MECANISMO DE EQUIPAMENTAMENTO / CONFIGURAÇÃO (Após desbloqueio de compras de equipamentos/cosmeticos na LOJAS - Habilitado/Equipar).
-  const handleEquipItem = (itemId: string) => {
+  const handleEquipItem = (itemId) => {
     playClickFeedback();
     const item = shopItems.find((i) => i.id === itemId);
     if (!item || !item.purchased) return;
@@ -883,7 +877,7 @@ export default function App() {
   };
 
   // AREA PARA CONSUMIR OU DEPLETA ITENS EXISTENTES DOS ARMARIOS. (Tais como poções das vidas etc, Caixas misteriosa...)
-  const handleConsumeItem = (itemId: string) => {
+  const handleConsumeItem = (itemId) => {
     const item = shopItems.find(i => i.id === itemId);
     if (!item || !item.quantity || item.quantity <= 0) {
       triggerAlert('Item não encontrado ou quantidade zerada.', 'info');
@@ -899,7 +893,7 @@ export default function App() {
       }
       
       setPet((prev) => ({ ...prev, status: 'idle', energy: 100, experience: 0 }));
-      setShopItems(prev => prev.map(i => i.id === itemId ? { ...i, quantity: i.quantity! - 1 } : i));
+      setShopItems(prev => prev.map(i => i.id === itemId ? { ...i, quantity: i.quantity - 1 } : i));
       localStorage.setItem('foca_last_energy_received_time', new Date().toISOString());
       playSound('sound_retro');
       triggerAlert('A Foca ressuscitou com 100% de Energia! Viva! 💖', 'success');
@@ -916,7 +910,7 @@ export default function App() {
       const energyBoost = energyMatch ? parseInt(energyMatch[1], 10) : 15;
       
       setPet(p => ({ ...p, energy: Math.min(100, p.energy + energyBoost), status: 'happy' }));
-      setShopItems(prev => prev.map(i => i.id === itemId ? { ...i, quantity: i.quantity! - 1 } : i));
+      setShopItems(prev => prev.map(i => i.id === itemId ? { ...i, quantity: i.quantity - 1 } : i));
       localStorage.setItem('foca_last_energy_received_time', new Date().toISOString());
       triggerAlert(`Consumiu ${item.name}! +${energyBoost} Energia.`, 'success');
       
@@ -946,7 +940,7 @@ export default function App() {
       }
 
       setShopItems(prev => prev.map(i => {
-        if (i.id === itemId) return { ...i, quantity: i.quantity! - 1 };
+        if (i.id === itemId) return { ...i, quantity: i.quantity - 1 };
         if (i.id === rewardedItemId) return { ...i, quantity: (i.quantity || 0) + quantityGained };
         return i;
       }));
@@ -957,12 +951,12 @@ export default function App() {
   };
 
   // IMPLANTAÇÕES COMPLEMENTARES DAS REDES DE ADD E AMIGOS DO FOCA!
-  const handleAddFriend = (emailOrNick: string): boolean => {
+  const handleAddFriend = (emailOrNick) => {
     const clearName = emailOrNick.includes('@') ? emailOrNick.split('@')[0] : emailOrNick;
     if (!clearName.trim()) return false;
 
     // Simulação / Instanciar um companheiro para ajudar (Aleatorizado)
-    const newFriend: Friend = {
+    const newFriend = {
       uid: `friend-${Date.now()}`,
       username: clearName.charAt(0).toUpperCase() + clearName.slice(1),
       level: Math.floor(Math.random() * 8) + 1,
@@ -975,8 +969,8 @@ export default function App() {
     return true;
   };
 
-  const handleCreateSession = async (title: string) => {
-    const newSession: SocialSession = {
+  const handleCreateSession = async (title) => {
+    const newSession = {
       id: `session-${Date.now()}`,
       title,
       hostId: user?.uid || 'user-123',
@@ -1005,7 +999,7 @@ export default function App() {
     triggerAlert(`Sessão dinâmica "${title}" criada ao vivo com sucesso!`, 'success');
   };
 
-  const handleJoinSession = async (sessionId: string) => {
+  const handleJoinSession = async (sessionId) => {
     if (!sessionId) {
       const prevActiveId = activeSessionId;
       setActiveSessionId(null);
@@ -1016,7 +1010,7 @@ export default function App() {
           const sessionDocRef = doc(db, 'social_sessions', prevActiveId);
           const currentSnap = await getDoc(sessionDocRef);
           if (currentSnap.exists()) {
-            const currentSession = currentSnap.data() as SocialSession;
+            const currentSession = currentSnap.data();
             const updatedParticipants = currentSession.participants.filter(p => p.uid !== user.uid);
             await updateDoc(sessionDocRef, {
               participants: updatedParticipants
@@ -1039,14 +1033,14 @@ export default function App() {
         const sessionDocRef = doc(db, 'social_sessions', sessionId);
         const currentSnap = await getDoc(sessionDocRef);
         if (currentSnap.exists()) {
-          const currentSession = currentSnap.data() as SocialSession;
+          const currentSession = currentSnap.data();
           const withoutMe = currentSession.participants.filter(p => p.uid !== user.uid);
           const updatedParticipants = [
             ...withoutMe,
             {
               uid: user.uid,
               username: user.displayName || username,
-              status: 'focusing' as const,
+              status: 'focusing',
               joinedAt: new Date().toISOString()
             }
           ];
@@ -1063,7 +1057,7 @@ export default function App() {
   };
 
   // Lógica global responsável pelas aprovações sistêmicas (login pass / criações válidas das contas).
-  const handleLoginSuccess = async (loggedInUser: { email: string; displayName?: string; uid: string }) => {
+  const handleLoginSuccess = async (loggedInUser) => {
     setUser(loggedInUser);
     localStorage.setItem('foca_user', JSON.stringify(loggedInUser));
 
@@ -1113,7 +1107,7 @@ export default function App() {
     triggerAlert(`Sessão iniciada com sucesso como ${loggedInUser.displayName || loggedInUser.email}`, 'success');
   };
 
-  const handleUpdateUsername = (newName: string) => {
+  const handleUpdateUsername = (newName) => {
     if (newName.length > 20) return;
     setPet(p => ({ ...p, name: newName }));
     if (user) {

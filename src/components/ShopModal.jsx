@@ -1,23 +1,7 @@
-/**
- * @license
- * SPDX-License-Identifier: Apache-2.0
- */
-
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { X, Coins, Check, Gift, ShoppingCart, Sparkles, AlertCircle } from 'lucide-react';
-import { ShopItem } from '../types';
 import { playClickFeedback } from '../utils/audio';
-
-interface ShopModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  coins: number;
-  items: ShopItem[];
-  onBuyItem: (itemId: string) => void;
-  onEquipItem: (itemId: string) => void;
-  onOpenMysteryBox?: () => void;
-}
 
 export default function ShopModal({
   isOpen,
@@ -27,10 +11,9 @@ export default function ShopModal({
   onBuyItem,
   onEquipItem,
   onOpenMysteryBox,
-}: ShopModalProps) {
-  const [activeTab, setActiveTab] = useState<'custom' | 'food'>('custom');
+}) {
+  const [activeTab, setActiveTab] = useState('custom');
 
-  // Protege rolagem exterior do escopo principal no momentos "Abertos"/Overlays das vistas do Mercado (Impede Scrolls Indesejáveis) 
   React.useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
@@ -47,7 +30,7 @@ export default function ShopModal({
     onClose();
   };
 
-  const isPotionLimitReached = (item: ShopItem) => {
+  const isPotionLimitReached = (item) => {
     if (item.id === 'potion_revive') {
       return (item.weeklyPurchasedCount || 0) >= 2;
     }
@@ -58,7 +41,6 @@ export default function ShopModal({
     <AnimatePresence>
       {isOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          {/* Filntro, Cobertor ou Tecidos Negros E Fundos Escuro & Chapado (Backdrop)! Embebidados por Estilizamentos Com Levis Blur e Sutis. Embebido Nos Fundors PopUP E Sobreposiçoẽas). */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -67,14 +49,12 @@ export default function ShopModal({
             className="absolute inset-0 bg-[#02030d]/85 backdrop-blur-sm"
           />
 
-          {/* Componente Quadra - Central:  Container Centralizador Das Viewports E Lojas Modais  — Exige-es Limpezas Visuais! Typografia e Rendas Nítidaz("CrissP"), Exectuando Entulho e Lixos de Extruturçóes Ou Estilo Nao Requisitados E Sem Poluição. */}
           <motion.div
             initial={{ opacity: 0, scale: 0.96 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.96 }}
             className="relative w-full max-w-2xl bg-brand-card border border-brand-border rounded-2xl overflow-hidden shadow-2xl flex flex-col max-h-[85vh] text-brand-text font-sans"
           >
-            {/* Regiões Do Envoltórias Do "Header E Topo"  Área Primarias De Entradas Das Identficaçõao Dos  Menus e etc. */}
             <div className="p-5 border-b border-brand-border flex items-center justify-between bg-brand-card">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-yellow-400/10 border border-yellow-400/20 flex items-center justify-center text-yellow-500">
@@ -87,7 +67,6 @@ export default function ShopModal({
               </div>
 
               <div className="flex items-center gap-3">
-                {/* Placáres e Demostradroes Economicos Ou "O Balanço  Display Das Finanças Ou O SALDO". Demonstativo Do Dinheiro No Canto  Das Telinhas E Aplicações. ("Quantidades MoedasOuro."). */}
                 <div className="bg-brand-bg px-4 py-2 rounded-xl border border-brand-border flex items-center gap-2">
                   <Coins size={14} className="text-yellow-400" />
                   <span className="font-mono font-bold text-xs text-yellow-500">{coins} Moedas</span>
@@ -102,7 +81,6 @@ export default function ShopModal({
               </div>
             </div>
 
-            {/* Módulos Ou Filtros  E Abas  Classificatórios  Seletivas, Acionáveis C/ Categoria Diversificadas No Comercio! (Painel Categoria / Tags de Escolha da Feiras) .*/}
             <div className="flex border-b border-brand-border bg-brand-bg/50 p-1 shrink-0">
               <button
                 onClick={() => { playClickFeedback(); setActiveTab('custom'); }}
@@ -126,11 +104,9 @@ export default function ShopModal({
               </button>
             </div>
 
-            {/* Caixas Prateleiras Ou Os Gradeamentos & Mals  (Contâineres E Containers) Feito E Dedicados à Emoldurar os Mostruários e Produtos Da "Loja". Representanto Item de Comercio.*/}
             <div className="flex-1 p-5 overflow-y-auto bg-brand-bg/30 space-y-4">
               
               {activeTab === 'custom' ? (
-                /* SKINS & SOUNDS */
                 <div>
                   <h4 className="text-[10px] font-mono uppercase text-brand-text/40 tracking-widest font-black mb-3">
                     Estilo e Alarmes Exclusivos
@@ -202,7 +178,6 @@ export default function ShopModal({
                   </div>
                 </div>
               ) : (
-                /* FOODS & POTIONS & MYSTERY BOXES */
                 <div>
                   <h4 className="text-[10px] font-mono uppercase text-brand-text/40 tracking-widest font-black mb-3">
                     Consumíveis de Energia & Fortificantes
@@ -265,7 +240,6 @@ export default function ShopModal({
               )}
             </div>
 
-            {/* Barra de Aviso Dica do RodaPe! -  Orientaçãos Basilar, Avisos Educados/Dicas De Inferiores! (Tip E Notas ou Dicas Nos Pés).*/}
             <div className="p-4 bg-brand-bg border-t border-brand-border text-center flex flex-col items-center gap-1">
               <span className="text-[10px] font-mono text-brand-text/40">
                 Ganhe mais moedas permanecendo em sessões de foco. 1 minuto focado pelo cronômetro = 1 moeda.

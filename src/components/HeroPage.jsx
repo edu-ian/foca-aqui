@@ -1,8 +1,3 @@
-/**
- * @license
- * SPDX-License-Identifier: Apache-2.0
- */
-
 import React from 'react';
 import { motion } from 'motion/react';
 import { 
@@ -21,17 +16,13 @@ import {
 } from 'lucide-react';
 import { playClickFeedback } from '../utils/audio';
 
-interface HeroPageProps {
-  onEnterApp: () => void;
-}
-
-export default function HeroPage({ onEnterApp }: HeroPageProps) {
+export default function HeroPage({ onEnterApp }) {
   const handleStart = () => {
     playClickFeedback();
     onEnterApp();
   };
 
-  const handleSmoothScroll = (e: React.MouseEvent<HTMLAnchorElement>, targetId: string) => {
+  const handleSmoothScroll = (e, targetId) => {
     e.preventDefault();
     playClickFeedback();
     const element = document.getElementById(targetId);
@@ -40,15 +31,14 @@ export default function HeroPage({ onEnterApp }: HeroPageProps) {
     }
   };
 
-  // Propriedades para configurar Variancias / Animação / Scroll-Events comuns e compartilhadas!
   const fadeInUp = {
     hidden: { opacity: 0, y: 30 },
-    visible: (custom: number = 0) => ({
+    visible: (custom = 0) => ({
       opacity: 1,
       y: 0,
       transition: {
         duration: 0.6,
-        ease: [0.16, 1, 0.3, 1], // Custom sophisticated cubic bezier
+        ease: [0.16, 1, 0.3, 1],
         delay: custom * 0.1,
       }
     })
@@ -56,15 +46,11 @@ export default function HeroPage({ onEnterApp }: HeroPageProps) {
 
   return (
     <div className="min-h-screen bg-[#00022f] text-[#F8F6F0] font-sans overflow-x-hidden selection:bg-[#F8F6F0] selection:text-[#00022f] relative">
-      {/* Textura detalhada, Padrões customizados com pontinhos de Fundo (Backgrund Dot) para melhorar a Estética e textura limpa */}
       <div className="absolute inset-0 opacity-[0.25] pointer-events-none z-0 bg-hero-dots" />
-
-      {/* Luzes e Espectros lumino-ambientais. Utilizados exclusivamentes como decorações do planos de base. */}
       <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-blue-500/10 rounded-full blur-[120px] pointer-events-none" />
       <div className="absolute top-1/3 right-1/4 w-[400px] h-[400px] bg-indigo-500/10 rounded-full blur-[100px] pointer-events-none" />
       <div className="absolute bottom-10 left-10 w-[300px] h-[300px] bg-indigo-700/10 rounded-full blur-[80px] pointer-events-none" />
 
-      {/* Cabeçalho Principal do Componente/Area */}
       <header className="fixed top-0 left-0 right-0 z-50 backdrop-blur-md bg-[#00022f]/70 border-b border-[#F8F6F0]/10 px-6 py-4">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <motion.div 
@@ -101,7 +87,6 @@ export default function HeroPage({ onEnterApp }: HeroPageProps) {
         </div>
       </header>
 
-      {/* Area Principal Hero, Ponto focal primário ou Top Section da Apresentação. (Banner ou Área Mestra). */}
       <section className="relative pt-32 pb-24 px-6 max-w-7xl mx-auto flex flex-col items-center justify-center text-center min-h-[90vh]">
         <motion.div
           initial="hidden"
@@ -166,7 +151,6 @@ export default function HeroPage({ onEnterApp }: HeroPageProps) {
           </button>
         </motion.div>
 
-        {/* Telas Gráficas / Caixas Canvas ilustradas interagíveis virtuais ou dinâmicas, Retratadas pelo componente Bonitinho e Flutuantes - Mascote (Foca) */}
         <motion.div
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -175,38 +159,23 @@ export default function HeroPage({ onEnterApp }: HeroPageProps) {
           onClick={handleStart}
           whileHover={{ rotate: 5 }}
         >
-          {/* Halo Animado -  O anéis visuais das dinâmicas com energias e raios no entorno. (Aréolas)  */}
           <div className="absolute inset-0 rounded-full bg-blue-500/20 border border-blue-500/40 animate-pulse scale-110" />
           
-          {/* Desenhos/Rabiscos ou Arquivos e Código nativos/vetoriais -> Formação / Pintagem  / Retrataçao da Foca(Mascote SVG) */}
           <svg viewBox="0 0 100 100" className="w-full h-full drop-shadow-[0_10px_30px_rgba(59,130,246,0.3)]">
-            {/* Arestas, Vetores do Esqueleto e do Corpo anatômico do nosso Bicho Foca */}
             <ellipse cx="50" cy="55" rx="35" ry="25" fill="#f1f5f9" />
-            
-            {/*  Fios do Bigodes e Vibrissas (Sincronizados Vectorialmente / Vetores Animados! Cabelinhos do rosto ) */}
             <line x1="22" y1="58" x2="10" y2="56" stroke="#94a3b8" strokeWidth="1.5" />
             <line x1="22" y1="62" x2="11" y2="64" stroke="#94a3b8" strokeWidth="1.5" />
             <line x1="78" y1="58" x2="90" y2="56" stroke="#94a3b8" strokeWidth="1.5" />
             <line x1="78" y1="62" x2="89" y2="64" stroke="#94a3b8" strokeWidth="1.5" />
-
-            {/* Vetores formadores da Aresta Corporal / Nadadeiras e Braços Da Mascota / (Dorso e Nados) */}
             <path d="M12 60 Q 2 65 15 72" fill="#e2e8f0" />
             <path d="M88 60 Q 98 65 85 72" fill="#e2e8f0" />
-            {/* Faixas Esteticas/Colareza de Medalha  e  Acessóssios tipo "Gold/Ourado". Indicando, exaltando Status do Esforço e Condecoração de Produtividade do usuário (Altos-Foco) */}
             <path d="M35 63 Q 50 71 65 63" fill="none" stroke="#eab308" strokeWidth="4" strokeLinecap="round" />
-
-            {/* Faces, Feições / Rosto Principal Vetorial da Foquinha. */}
-            {/* Vetoriação / Bochechas Animadas "Bulshed" e com Enrubescimento / Bochechudas(Fofas) p/ Pets  */}
             <circle cx="33" cy="58" r="4.5" fill="#fda4af" />
             <circle cx="67" cy="58" r="4.5" fill="#fda4af" />
-            
-            {/* Olhos de Brilho Dinâmicos com Reflexos  (Implementação Animada do Piscado ou Piscares via React Motion no SVG nativo) */}
             <circle cx="40" cy="52" r="3.5" fill="#0f172a" />
             <circle cx="39.2" cy="50.5" r="1.2" fill="#ffffff" />
             <circle cx="60" cy="52" r="3.5" fill="#0f172a" />
             <circle cx="59.2" cy="50.5" r="1.2" fill="#ffffff" />
-
-            {/* Configurasção / Vetores  das Porções Nariz E contornos/arcos das Bocas E Linhas do sorriso da Foca. */}
             <ellipse cx="50" cy="56" rx="4.5" ry="3.2" fill="#1e293b" />
             <path d="M47 59 C 48 61 50 61 50 59 C 50 61 52 61 53 59" fill="none" stroke="#1e293b" strokeWidth="2" strokeLinecap="round" />
           </svg>
@@ -217,7 +186,6 @@ export default function HeroPage({ onEnterApp }: HeroPageProps) {
         </motion.div>
       </section>
 
-      {/* Seção Destaques(Features / Detalhes): "Referentes ou Descrições Informativas sobre" a plataforma ou História etc. */}
       <section id="sobre" className="py-24 px-6 border-t border-[#F8F6F0]/10 max-w-7xl mx-auto scroll-mt-24">
         <div className="grid md:grid-cols-12 gap-12 lg:gap-16 items-start animate-fade-in">
           <motion.div
@@ -275,7 +243,6 @@ export default function HeroPage({ onEnterApp }: HeroPageProps) {
         </div>
       </section>
 
-      {/* Seçção Destaques: Ref. número 1: (Arquitetura e  lógica descritiva ou Funcionalidades) "Do Metodos de Estudo/Foco Pomodoro" . */}
       <section id="como-funciona" className="py-24 px-6 border-t border-[#F8F6F0]/10 max-w-7xl mx-auto scroll-mt-24">
         <div className="grid md:grid-cols-2 gap-16 items-center">
           <motion.div
@@ -320,7 +287,6 @@ export default function HeroPage({ onEnterApp }: HeroPageProps) {
             transition={{ duration: 0.8 }}
             className="bg-[#0c0f47] border border-[#F8F6F0]/15 rounded-3xl p-8 relative overflow-hidden shadow-2xl group"
           >
-            {/* Simuladores ilustrativos virtuais de paineis visuais limpos  e Premium estilo Bento-Box / Grade Grid Bento! */}
             <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/10 rounded-full blur-2xl group-hover:bg-indigo-500/20 transition-all duration-700" />
             <div className="flex justify-between items-center mb-10">
               <span className="text-xs font-mono tracking-widest text-indigo-300 uppercase">Interactive Widget Previa</span>
@@ -341,7 +307,6 @@ export default function HeroPage({ onEnterApp }: HeroPageProps) {
                 <span className="px-3 py-1 text-[10px] bg-green-500/20 border border-green-400/30 rounded-lg text-green-300 font-medium">Foco Ativo</span>
               </div>
               
-              {/* Barra Progressiva Visuais - Falsa / "Mockup" (Ilustrando a interações do progressos fictício e dos tempos nas demonstrações) */}
               <div className="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
                 <div className="w-[99%] h-full bg-gradient-to-r from-blue-400 to-indigo-500" />
               </div>
@@ -350,7 +315,6 @@ export default function HeroPage({ onEnterApp }: HeroPageProps) {
         </div>
       </section>
 
-      {/* Seçção Destaques: Ref. N.2: "Tarefas(Todo) / Relacionado as Integrações  Lista-S Listadas de Funções E Afazeres!" */}
       <section id="todo-list" className="py-24 px-6 border-t border-[#F8F6F0]/10 max-w-7xl mx-auto scroll-mt-24">
         <div className="grid md:grid-cols-2 gap-16 items-center">
           <motion.div
@@ -425,7 +389,6 @@ export default function HeroPage({ onEnterApp }: HeroPageProps) {
         </div>
       </section>
 
-      {/* Seçção Destaques: Ref. N.3: Area que explica "O Funcionamento / Detalhamento  do Amiguinho O Pet & As Suas Energias" (Seção Mascote) */}
       <section id="pet-virtual" className="py-24 px-6 border-t border-[#F8F6F0]/10 max-w-7xl mx-auto scroll-mt-24">
         <div className="grid md:grid-cols-2 gap-16 items-center">
           <motion.div
@@ -466,23 +429,13 @@ export default function HeroPage({ onEnterApp }: HeroPageProps) {
               LEVEL 4
             </div>
 
-            {/* Modulo Didático / Módulagem que Simulam  o comportamento reais  das mascotes na plataformas & das telas */}
             <div className="w-40 h-40 relative mb-6">
-              {/* Exposição Gráfica : A Foca ou Avatares / Modelos dinâmicos exibidos e renderizados (Com ou sem Vestimenta E/  Skins Adicionando Em Aplicações) */}
               <svg viewBox="0 0 100 100" className="w-full h-full drop-shadow-[0_8px_20px_rgba(59,130,246,0.2)]">
-                {/* Modelagem de Preview / Câmaradagem ou Overlay "Ninja" (Preview simulando os Produtos visíveis/disponiveis e vestuários nos mostruários e Mercados.) */}
                 <ellipse cx="50" cy="55" rx="35" ry="25" fill="#f1f5f9" />
-                
-                {/* Desenhos/Peças -> Márcaras do Vestuário ou  Skin Ninja (Rosto Coberto) . */}
                 <rect x="25" y="42" width="50" height="20" rx="6" fill="#0f172a" />
-                {/* Rasgos Geométricos / Peças / Cortes, projetados especificamente nas Vestimentas   Visando à Exposicões ou Aberturas exclusívos P/ Os Olhos (Oculares Face). */}
                 <rect x="35" y="47" width="30" height="10" rx="3" fill="#f1f5f9" />
-                
-                {/* Ilustrando E Exibindo diretamente as partes/elementos  "Olho Vivo", trespassando (Vazado),  frente aos buracos contidos Máscaras / Skin.  */}
                 <circle cx="42" cy="52" r="2.5" fill="#0f172a" />
                 <circle cx="58" cy="52" r="2.5" fill="#0f172a" />
-
-                {/* Ilustrando E Exibindo Bigodes saltantes (Exteriorizados) além as bases vetoriaís "Mascaradas". Rompendo/Sobrepondo as peças de roupa!  */}
                 <line x1="22" y1="58" x2="10" y2="56" stroke="#94a3b8" strokeWidth="1" />
                 <line x1="78" y1="58" x2="90" y2="56" stroke="#94a3b8" strokeWidth="1" />
               </svg>
@@ -506,7 +459,6 @@ export default function HeroPage({ onEnterApp }: HeroPageProps) {
         </div>
       </section>
 
-      {/* Seçção Destaques: Ref. N.4: Apresentações e Informação  das moedas ou Mecanismo Dinheiro/Eco : "Das Lojas e Mercadorias (Produtos)". */}
       <section id="mercado" className="py-24 px-6 border-t border-[#F8F6F0]/10 max-w-7xl mx-auto scroll-mt-24">
         <div className="grid md:grid-cols-2 gap-16 items-center">
           <motion.div
@@ -528,21 +480,24 @@ export default function HeroPage({ onEnterApp }: HeroPageProps) {
               {[
                 { name: 'Foca Ninja', price: 80, icon: Shield, extra: 'Traje' },
                 { name: 'Poção de Vida', price: 40, icon: Sparkles, extra: 'Consumível' },
-              ].map((shopItem, idx) => (
-                <div key={idx} className="p-4 bg-slate-950/40 border border-[#F8F6F0]/10 rounded-2xl text-left flex flex-col justify-between">
-                  <div className="flex justify-between items-start mb-3">
-                    <div className="p-2 bg-indigo-500/10 text-indigo-300 rounded-lg">
-                      <shopItem.icon size={16} />
+              ].map((shopItem, idx) => {
+                const Icon = shopItem.icon;
+                return (
+                  <div key={idx} className="p-4 bg-slate-950/40 border border-[#F8F6F0]/10 rounded-2xl text-left flex flex-col justify-between">
+                    <div className="flex justify-between items-start mb-3">
+                      <div className="p-2 bg-indigo-500/10 text-indigo-300 rounded-lg">
+                        <Icon size={16} />
+                      </div>
+                      <span className="text-[9px] uppercase tracking-wider font-semibold text-slate-400">{shopItem.extra}</span>
                     </div>
-                    <span className="text-[9px] uppercase tracking-wider font-semibold text-slate-400">{shopItem.extra}</span>
+                    <h4 className="text-xs font-semibold mb-1">{shopItem.name}</h4>
+                    <div className="flex justify-between items-center mt-3">
+                      <span className="text-xs font-mono font-bold text-yellow-300">{shopItem.price} Moedas</span>
+                      <button className="text-[9px] px-2.5 py-1 bg-[#F8F6F0]/10 text-[#F8F6F0] hover:bg-[#F8F6F0]/20 rounded-md font-bold uppercase transition-all">Comprar</button>
+                    </div>
                   </div>
-                  <h4 className="text-xs font-semibold mb-1">{shopItem.name}</h4>
-                  <div className="flex justify-between items-center mt-3">
-                    <span className="text-xs font-mono font-bold text-yellow-300">{shopItem.price} Moedas</span>
-                    <button className="text-[9px] px-2.5 py-1 bg-[#F8F6F0]/10 text-[#F8F6F0] hover:bg-[#F8F6F0]/20 rounded-md font-bold uppercase transition-all">Comprar</button>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </motion.div>
 
@@ -567,7 +522,6 @@ export default function HeroPage({ onEnterApp }: HeroPageProps) {
         </div>
       </section>
 
-      {/* Seçção Destaques: Ref. N.5: Visões e Textos exlpicativos  sobre (Estratégias / Sistema E  Contadores ou Ranks Ofensivos  - FIRE/STREACK). */}
       <section className="py-24 px-6 border-t border-[#F8F6F0]/10 max-w-7xl mx-auto text-center">
         <motion.div
           initial={{ opacity: 0, scale: 0.97 }}
@@ -617,7 +571,6 @@ export default function HeroPage({ onEnterApp }: HeroPageProps) {
         </motion.div>
       </section>
 
-      {/* Area Baixa/Inferiores: O  Rodapé / Assinatura  da Páginas (E dos Sites ou Landings).  */}
       <footer className="border-t border-[#F8F6F0]/10 bg-[#000122] py-12 px-6">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="flex items-center gap-3">

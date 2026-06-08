@@ -1,26 +1,14 @@
-/**
- * @license
- * SPDX-License-Identifier: Apache-2.0
- */
-
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Cell } from 'recharts';
 import { Calendar, Award, Zap, Clock } from 'lucide-react';
-import { UserStats } from '../types';
 import { playClickFeedback } from '../utils/audio';
 
-type PeriodType = 'week' | 'month' | 'year';
+export default function AnalyticsReports({ stats }) {
+  const [period, setPeriod] = useState('week');
 
-interface AnalyticsReportsProps {
-  stats: UserStats;
-}
-
-export default function AnalyticsReports({ stats }: AnalyticsReportsProps) {
-  const [period, setPeriod] = useState<PeriodType>('week');
-
-  // Formatação amigável! Converte para Horas e Minutos. Extracao (1H E 45M) - (Horas / Minutos extaídos)
-  const formatMinutes = (minutes: number) => {
+  // Formatação amigável! Converte para Horas e Minutos.
+  const formatMinutes = (minutes) => {
     if (minutes === 0) return '0m';
     const h = Math.floor(minutes / 60);
     const m = minutes % 60;
@@ -29,10 +17,9 @@ export default function AnalyticsReports({ stats }: AnalyticsReportsProps) {
 
   const getChartData = () => {
     if (period === 'month') {
-      // Controlar visibilidade. (Demonstrando à cada 3 dia. Limita colisões estéticas / Sobreposições indesejada em ambientes padrões.)
       return stats.monthlyFocus.map((item, idx) => ({
         label: idx % 3 === 0 ? `D${item.date}` : '',
-        value: Math.round((item.minutes / 60) * 10) / 10, // hours
+        value: Math.round((item.minutes / 60) * 10) / 10,
         originalMinutes: item.minutes,
       }));
     }
@@ -43,7 +30,6 @@ export default function AnalyticsReports({ stats }: AnalyticsReportsProps) {
         originalMinutes: item.minutes,
       }));
     }
-    // Parametros (Semana). Modificado para o valor base ou valores padrões (Data base inicial ex "A semana")
     return stats.weeklyFocus.map((item) => ({
       label: item.day,
       value: Math.round((item.minutes / 60) * 10) / 10,
@@ -51,18 +37,16 @@ export default function AnalyticsReports({ stats }: AnalyticsReportsProps) {
     }));
   };
 
-  const handlePeriodChange = (newPeriod: PeriodType) => {
+  const handlePeriodChange = (newPeriod) => {
     playClickFeedback();
     setPeriod(newPeriod);
   };
 
   const chartData = getChartData();
 
-  // Capturar em Resumo os atributos (Rápidos) estatísticos e os parâmetros de perfis
   const totalFocusHoursToday = (stats.focusMinutesToday / 60).toFixed(1);
 
-  // Dicas customizadas / Caixas para a moldagem estética (Para encaixe / adaptação de Recharts nas visões / temas originais).
-  const CustomTooltip = ({ active, payload }: any) => {
+  const CustomTooltip = ({ active, payload }) => {
     if (active && payload && payload.length) {
       const data = payload[0].payload;
       return (
@@ -83,7 +67,6 @@ export default function AnalyticsReports({ stats }: AnalyticsReportsProps) {
           <h4 className="text-sm font-display font-extrabold text-brand-text">Histórico de Foco</h4>
         </div>
 
-        {/* Barra de Filtros / Seletivos */}
         <div className="flex gap-1 bg-brand-bg border border-brand-border rounded-xl p-1 shrink-0 self-end sm:self-auto">
           {[
             { id: 'week', label: 'Semana' },
@@ -92,7 +75,7 @@ export default function AnalyticsReports({ stats }: AnalyticsReportsProps) {
           ].map((tab) => (
             <button
               key={tab.id}
-              onClick={() => handlePeriodChange(tab.id as PeriodType)}
+              onClick={() => handlePeriodChange(tab.id)}
               className={`px-2 py-1 rounded-lg text-[9px] font-bold uppercase tracking-wider cursor-pointer transition-all ${
                 period === tab.id
                   ? 'bg-brand-text text-brand-bg font-heavy shadow-sm'
@@ -105,9 +88,7 @@ export default function AnalyticsReports({ stats }: AnalyticsReportsProps) {
         </div>
       </div>
 
-      {/* Grade visual dos indicadores numéricos primordiais (Quicks/Rapidos) */}
       <div className="grid grid-cols-2 gap-2 mb-4 shrink-0">
-        {/* Estatística / Cards de Informações  Nro 1 */}
         <div className="p-2 bg-brand-bg/40 border border-brand-border rounded-xl flex items-center gap-2">
           <div className="p-1.5 bg-blue-500/10 text-blue-500 rounded-lg shrink-0">
             <Clock size={12} />
@@ -118,7 +99,6 @@ export default function AnalyticsReports({ stats }: AnalyticsReportsProps) {
           </div>
         </div>
 
-        {/* Estatística / Cards de Informações  Nro 2 */}
         <div className="p-2 bg-brand-bg/40 border border-brand-border rounded-xl flex items-center gap-2">
           <div className="p-1.5 bg-orange-500/10 text-orange-400 rounded-lg shrink-0">
             <Zap size={12} />
@@ -129,7 +109,6 @@ export default function AnalyticsReports({ stats }: AnalyticsReportsProps) {
           </div>
         </div>
 
-        {/* Estatística / Cards de Informações  Nro 3 */}
         <div className="p-2 bg-brand-bg/40 border border-brand-border rounded-xl flex items-center gap-2">
           <div className="p-1.5 bg-rose-500/10 text-rose-500 rounded-lg shrink-0">
             <Award size={12} />
@@ -140,7 +119,6 @@ export default function AnalyticsReports({ stats }: AnalyticsReportsProps) {
           </div>
         </div>
 
-        {/* Estatística / Cards de Informações  Nro 4 */}
         <div className="p-2 bg-brand-bg/40 border border-brand-border rounded-xl flex items-center gap-2">
           <div className="p-1.5 bg-emerald-500/10 text-emerald-400 rounded-lg shrink-0">
             <Calendar size={12} />
@@ -152,7 +130,6 @@ export default function AnalyticsReports({ stats }: AnalyticsReportsProps) {
         </div>
       </div>
 
-      {/* Area Gráfica (Painel de renderização Canvas dos gráficos de performance) */}
       <div className="h-[150px] w-full mt-1">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={chartData} margin={{ top: 5, right: 5, left: -25, bottom: 5 }}>

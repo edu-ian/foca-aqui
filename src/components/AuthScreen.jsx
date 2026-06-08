@@ -11,23 +11,18 @@ import {
   sendPasswordResetEmail 
 } from 'firebase/auth';
 
-interface AuthScreenProps {
-  onBack: () => void;
-  onLoginSuccess: (user: { email: string; displayName?: string; uid: string }) => void;
-}
-
-export default function AuthScreen({ onBack, onLoginSuccess }: AuthScreenProps) {
+export default function AuthScreen({ onBack, onLoginSuccess }) {
   const [isSignUp, setIsSignUp] = useState(false);
   const [isForgotPassword, setIsForgotPassword] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [username, setUsername] = useState('');
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
+  const [message, setMessage] = useState(null);
 
   const googleProvider = new GoogleAuthProvider();
 
-  const handleAuthError = (err: any) => {
+  const handleAuthError = (err) => {
     console.error("Auth error:", err);
     let BrazilError = "Ocorreu um erro ao processar. Verifique as credenciais.";
     if (err.code === 'auth/wrong-password') BrazilError = "Senha incorreta.";
@@ -39,7 +34,7 @@ export default function AuthScreen({ onBack, onLoginSuccess }: AuthScreenProps) 
     setMessage({ text: BrazilError, type: 'error' });
   };
 
-  const handleEmailAuth = async (e: React.FormEvent) => {
+  const handleEmailAuth = async (e) => {
     e.preventDefault();
     playClickFeedback();
     setLoading(true);
@@ -86,7 +81,6 @@ export default function AuthScreen({ onBack, onLoginSuccess }: AuthScreenProps) 
         setLoading(false);
       }
     } else {
-      // Plano e estrutura padrão "De Fundo/Offline" quando não habilitar instâncias reais conectivas com a Base / Banco online. (Demo Mode)
       setTimeout(() => {
         setLoading(false);
         if (isSignUp) {
@@ -122,13 +116,12 @@ export default function AuthScreen({ onBack, onLoginSuccess }: AuthScreenProps) 
           displayName: result.user.displayName || undefined,
           uid: result.user.uid,
         });
-      } catch (err: any) {
+      } catch (err) {
         handleAuthError(err);
       } finally {
         setLoading(false);
       }
     } else {
-      // Entrada por via Alternativa sem necessidade (Demo ou Visita Rapida!). (Botao Fake)
       setTimeout(() => {
         setLoading(false);
         onLoginSuccess({
@@ -140,7 +133,7 @@ export default function AuthScreen({ onBack, onLoginSuccess }: AuthScreenProps) 
     }
   };
 
-  const handleResetPassword = async (e: React.FormEvent) => {
+  const handleResetPassword = async (e) => {
     e.preventDefault();
     playClickFeedback();
     setLoading(true);
@@ -173,11 +166,9 @@ export default function AuthScreen({ onBack, onLoginSuccess }: AuthScreenProps) 
 
   return (
     <div className="min-h-screen bg-[#060824] text-[#F8F6F0] flex flex-col items-center justify-center p-4 relative overflow-hidden font-sans">
-      {/* Círculos visuais no plano de fundo. (Estética/Arte) */}
       <div className="absolute -top-40 -left-40 w-96 h-96 bg-indigo-600/[0.15] rounded-full blur-3xl pointer-events-none" />
       <div className="absolute -bottom-45 -right-45 w-[450px] h-[450px] bg-blue-500/[0.12] rounded-full blur-3xl pointer-events-none" />
 
-      {/* Botão controlador de Regresso ou Voltar (Telas p/ Início / Landing) */}
       <motion.button
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
@@ -189,7 +180,6 @@ export default function AuthScreen({ onBack, onLoginSuccess }: AuthScreenProps) 
       </motion.button>
 
       <div className="w-full max-w-md bg-[#0a0d33] border border-[#F8F6F0]/10 rounded-2xl p-6 md:p-8 shadow-2xl relative z-10 transition-all">
-        {/* Arte Visual de Branding / (Cabeçalhos). Logomarcas, Marcas e Enunciados. */}
         <div className="flex flex-col items-center text-center mb-8">
           <div className="w-12 h-12 rounded-xl bg-blue-500/10 border border-blue-400/20 flex items-center justify-center text-blue-400 mb-3">
             <Sparkles size={24} />
@@ -207,7 +197,6 @@ export default function AuthScreen({ onBack, onLoginSuccess }: AuthScreenProps) 
           </p>
         </div>
 
-        {/* Container comportamental embutido para alertar Mensagens / Validações (Avisos de Erros) e Textos Notificatórios */}
         <AnimatePresence mode="wait">
           {message && (
             <motion.div
@@ -231,7 +220,6 @@ export default function AuthScreen({ onBack, onLoginSuccess }: AuthScreenProps) 
         </AnimatePresence>
 
         {isForgotPassword ? (
-          /* FORGOT PASSWORD FORM */
           <form onSubmit={handleResetPassword} className="space-y-4">
             <div className="space-y-1.5">
               <label className="text-[10px] font-mono tracking-widest text-[#F8F6F0]/40 font-bold uppercase">
@@ -270,7 +258,6 @@ export default function AuthScreen({ onBack, onLoginSuccess }: AuthScreenProps) 
             </button>
           </form>
         ) : (
-          /* LOGIN & SIGNUP FORMS */
           <form onSubmit={handleEmailAuth} className="space-y-4">
             
             {isSignUp && (
@@ -352,7 +339,6 @@ export default function AuthScreen({ onBack, onLoginSuccess }: AuthScreenProps) 
               {loading ? "Processando..." : isSignUp ? "Cadastrar Conta" : "Entrar no App"}
             </button>
 
-            {/* Opções / Componentizações ou Gatilhos Google Auth / Oauth (Acesso com Serviço de Nuvem Social Google!) */}
             <div className="relative my-6 block">
               <div className="absolute inset-0 flex items-center">
                 <div className="w-full border-t border-[#F8F6F0]/10" />
@@ -372,7 +358,6 @@ export default function AuthScreen({ onBack, onLoginSuccess }: AuthScreenProps) 
               Entrar com o Google
             </button>
 
-            {/* Comutador de visualizações! Alernâncias entres "Singup"(Criar O Seu)/ Register | VS "Login" (Entrar!) */}
             <div className="pt-4 text-center">
               <button
                 type="button"

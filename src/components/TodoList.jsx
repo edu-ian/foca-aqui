@@ -1,21 +1,7 @@
-/**
- * @license
- * SPDX-License-Identifier: Apache-2.0
- */
-
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Plus, Check, ChevronDown, ChevronUp, Trash2, ChevronLeft, ChevronRight, AlertTriangle } from 'lucide-react';
-import { Task } from '../types';
 import { playClickFeedback } from '../utils/audio';
-
-interface TodoListProps {
-  tasks: Task[];
-  onAddTask: (title: string, description: string, estimatedPomodoros: number, priority: 'normal' | 'importante' | 'urgente') => void;
-  onToggleComplete: (id: string) => void;
-  onUpdateTask: (id: string, updates: Partial<Task>) => void;
-  onDeleteTask: (id: string) => void;
-}
 
 export default function TodoList({
   tasks,
@@ -23,19 +9,18 @@ export default function TodoList({
   onToggleComplete,
   onUpdateTask,
   onDeleteTask,
-}: TodoListProps) {
+}) {
   const [newTitle, setNewTitle] = useState('');
   const [newDescription, setNewDescription] = useState('');
   const [newEstimated, setNewEstimated] = useState(2);
-  const [newPriority, setNewPriority] = useState<'normal' | 'importante' | 'urgente'>('normal');
-  const [expandedId, setExpandedId] = useState<string | null>(null);
-  const [filter, setFilter] = useState<'all' | 'pending' | 'completed'>('all');
+  const [newPriority, setNewPriority] = useState('normal');
+  const [expandedId, setExpandedId] = useState(null);
+  const [filter, setFilter] = useState('all');
   
-  // Lógicas operativas embutidas na visualização segmentadas e Particionadas (Paginação!)
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
 
-  const handleAddTask = (e: React.FormEvent) => {
+  const handleAddTask = (e) => {
     e.preventDefault();
     if (!newTitle.trim()) return;
     
@@ -51,30 +36,27 @@ export default function TodoList({
     setNewDescription('');
     setNewEstimated(2);
     setNewPriority('normal');
-    setCurrentPage(1); // Back to page 1 on add
+    setCurrentPage(1);
   };
 
-  const handleToggleExpand = (id: string) => {
+  const handleToggleExpand = (id) => {
     playClickFeedback();
     setExpandedId(expandedId === id ? null : id);
   };
 
-  const handleToggleDone = (e: React.MouseEvent, id: string) => {
+  const handleToggleDone = (e, id) => {
     e.stopPropagation();
     playClickFeedback();
     onToggleComplete(id);
   };
 
-  // Módulo ou Sessão do Algoritmo p/ (Filtros), Processamento / Reduçao informacional nas Listas de Tarefas - TodoList
   const filteredTasks = tasks.filter((t) => {
     if (filter === 'pending') return !t.completed;
     if (filter === 'completed') return t.completed;
     return true;
   });
 
-  // Cálculos Aritméticos voltados na descoberta e geração dos números máximos necessários nas composições contidas nas Paginações.
   const totalPages = Math.max(1, Math.ceil(filteredTasks.length / itemsPerPage));
-  // Lógicas Protetivas: Checa os Limites da Paginação -> Seguradora visual (Abaixo O e Acima Pág Final) das Quebras visuais / Bugs.
   const activePage = currentPage > totalPages ? totalPages : currentPage;
   
   const startIndex = (activePage - 1) * itemsPerPage;
@@ -94,7 +76,7 @@ export default function TodoList({
     }
   };
 
-  const getPriorityColor = (p: 'normal' | 'importante' | 'urgente') => {
+  const getPriorityColor = (p) => {
     switch (p) {
       case 'urgente':
         return 'bg-red-500/10 border-red-500/30 text-red-400';
@@ -105,7 +87,7 @@ export default function TodoList({
     }
   };
 
-  const getPriorityLabel = (p: 'normal' | 'importante' | 'urgente') => {
+  const getPriorityLabel = (p) => {
     switch (p) {
       case 'urgente': return 'Urgente';
       case 'importante': return 'Importante';
@@ -120,7 +102,6 @@ export default function TodoList({
           LISTA DE TAREFAS
         </h3>
 
-        {/* Módulagens Dos Encartamentos Ou "Filtros Curtoss " (Pequenas Abatimentos De Ordens & Tags P/ Botoessinhos de Filtragem Simples Rapida). !*/}
         <div className="flex gap-1 bg-brand-bg border border-brand-border rounded-lg p-0.5">
           {[
             { id: 'all', label: 'Tudo' },
@@ -131,7 +112,7 @@ export default function TodoList({
               key={btn.id}
               onClick={() => {
                 playClickFeedback();
-                setFilter(btn.id as any);
+                setFilter(btn.id);
                 setCurrentPage(1);
               }}
               className={`px-2 py-1 text-[10px] font-bold rounded-md cursor-pointer transition-all ${
@@ -146,7 +127,6 @@ export default function TodoList({
         </div>
       </div>
 
-      {/* Painés Evoluídos e Formulários Robustos e Aprimorados de Múltiplos Campos("Inputs" Diversos Complexosos ) -> Dedicado Especificalmentes a Gerar e Formular ("Criar Nova TAREFAS / Metas O e Registros") !*/}
       <form onSubmit={handleAddTask} className="mb-6 p-4 rounded-xl bg-brand-bg/60 border border-brand-border space-y-3.5 shrink-0 shadow-sm">
         <div className="text-[10px] font-mono tracking-widest text-[#F8F6F0]/40 uppercase font-bold">
           CRIAR NOVA TAREFA
@@ -190,7 +170,7 @@ export default function TodoList({
                 <span className="text-[9px] font-mono text-[#F8F6F0]/40 uppercase block font-bold">Prioridade:</span>
                 <select
                   value={newPriority}
-                  onChange={(e) => setNewPriority(e.target.value as any)}
+                  onChange={(e) => setNewPriority(e.target.value)}
                   className="w-full py-1 px-2 text-xs bg-brand-bg text-brand-text border border-brand-border rounded-lg focus:outline-none cursor-pointer"
                 >
                   <option value="normal">Normal</option>
@@ -224,7 +204,6 @@ export default function TodoList({
         </div>
       </form>
 
-      {/* Caixas Mães E Containers Para Composicao e Retencoa Lista Completada -> Modificados E Ajustados Por "Arregalamentos Ou Expansoẽs Vecticais", P/ Suportamento Mais Generoso Verticalmentes dos Listamentos!(Task list).!*/}
       <div className="flex-1 overflow-y-auto space-y-2.5 min-h-[340px]">
         <AnimatePresence mode="sync">
           {paginatedTasks.length > 0 ? (
@@ -246,10 +225,8 @@ export default function TodoList({
                   }`}
                   onClick={() => handleToggleExpand(task.id)}
                 >
-                  {/* Listas Individuaix - Seção Lateral - Linhas Da Cima Do Componente E  Área Cabeçalho "O Header - Linhas e Celulas Superior. " !*/}
                   <div className="p-3.5 flex items-center justify-between gap-3 select-none">
                     <div className="flex items-center gap-3 min-w-0 flex-1">
-                      {/* Acionadores - Botãoes De Tipos Das Verificação  (ChecksOu E X / Checado OU Não O). Botões "Checkbox". !*/}
                       <button
                         type="button"
                         onClick={(e) => handleToggleDone(e, task.id)}
@@ -267,7 +244,6 @@ export default function TodoList({
                           {task.title}
                         </span>
                         
-                        {/* Elemento Informativo Visual Menor ! - Etíqueitas, Selos E Emblemas De Tamanhos "Minis / Tags de Identificador Ou Bagds "! (Demonstraticos Classificante A Categóricas e a Prioridade Ourgência). !*/}
                         <div className="flex items-center gap-1.5 mt-1">
                           <span className={`text-[8px] font-mono font-bold px-1.5 py-0.2 rounded border uppercase tracking-wider ${getPriorityColor(task.priority || 'normal')}`}>
                             {getPriorityLabel(task.priority || 'normal')}
@@ -288,13 +264,11 @@ export default function TodoList({
                     </div>
                   </div>
 
-                  {/* Acionador Visual de "Drops/E Expansoes Das Sanfona!  Abre / Aberturas Informativas & Do Detalhe das Entrainhas (Expndidor View)." !*/}
                   {isExpanded && (
                     <div 
                       className="px-4 pb-4 border-t border-brand-border/60 text-xs bg-brand-bg/10 space-y-3.5 pt-3"
                       onClick={(e) => e.stopPropagation()}
                     >
-                      {/* Campos Visíveis de Leitura Ou Descrissãos ->  Aregas Para Demontraçao De Observações Ou Longos Textamentos Dos Tópicos, "Os Descriptions/Textos Complementeres". !*/}
                       <div className="space-y-1">
                         <label className="text-brand-text/50 font-mono text-[9px] uppercase">Descrição Detalhada</label>
                         <textarea
@@ -307,12 +281,11 @@ export default function TodoList({
                         />
                       </div>
 
-                      {/* Módulos de Operação e Linhas Finalizaçoes.  P/ Ediçōeas Estimativas, Engrenagens de Ajustagem Ou As Acções de Aborta / " Deletar Células E Itens ". !*/}
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                         <div className="flex items-center gap-3">
                           <span className="text-brand-text/50 font-mono text-[9px] uppercase block min-w-max">Ajustar prioridade:</span>
                           <div className="flex gap-1">
-                            {(['normal', 'importante', 'urgente'] as const).map((p) => (
+                            {(['normal', 'importante', 'urgente']).map((p) => (
                               <button
                                 key={p}
                                 type="button"
@@ -382,7 +355,6 @@ export default function TodoList({
         </AnimatePresence>
       </div>
 
-      {/* Área Para Módulaçao dos Comandos Visíveis Das Págiana ! Componentização Do Render de Teclas Customizadas C/ Estética  E A Aparências "Mais  Contemporânea Ou Moderno!". Estilos Das Paginções. !*/}
       <div className="mt-4 pt-3 border-t border-brand-border flex items-center justify-between text-xs font-mono shrink-0">
         <span className="text-[10px] text-brand-text/50 uppercase">
           Total: {filteredTasks.length} {filteredTasks.length === 1 ? 'Tarefa' : 'Tarefas'}
