@@ -67,10 +67,10 @@ export default function App() {
     const saved = localStorage.getItem('foca_pet');
     return saved ? JSON.parse(saved) : {
       name: 'Foca Aqui',
-      level: 1,
-      experience: 25,
-      maxExperience: 100,
-      energy: 75,
+      level: 0,
+      experience: 0,
+      maxExperience: 0,
+      energy: 100,
       skin: 'padrão',
       status: 'idle',
       lastEnergyDeductionTime: new Date().toISOString()
@@ -103,6 +103,29 @@ const [shopItems, setShopItems] = useState(() => {
       { uid: 'friend-2', username: 'Mariana_Estudos', level: 6, coins: 340, focusMinutes: 80 }
     ];
   });
+  //  FORÇA A LIMPEZA E RECARGA DOS ITENS DO MERCADO (remova depois que funcionar)
+useEffect(() => {
+  const saved = localStorage.getItem('foca_shop_items');
+  if (saved) {
+    try {
+      const parsed = JSON.parse(saved);
+      // Se qualquer item não tiver a propriedade 'type', substitui tudo
+      if (!parsed.length || !parsed.some(item => item.type)) {
+        console.log("Itens corrompidos detectados. Substituindo pelos dados corretos...");
+        localStorage.setItem('foca_shop_items', JSON.stringify(INITIAL_SHOP_ITEMS));
+        setShopItems([...INITIAL_SHOP_ITEMS]);
+      }
+    } catch (e) {
+      console.error("Erro ao ler localStorage, resetando...", e);
+      localStorage.setItem('foca_shop_items', JSON.stringify(INITIAL_SHOP_ITEMS));
+      setShopItems([...INITIAL_SHOP_ITEMS]);
+    }
+  } else {
+    // Se não tem nada, salva os itens corretos
+    localStorage.setItem('foca_shop_items', JSON.stringify(INITIAL_SHOP_ITEMS));
+    setShopItems([...INITIAL_SHOP_ITEMS]);
+  }
+}, []);
 
   const [socialSessions, setSocialSessions] = useState(() => {
     const saved = localStorage.getItem('foca_sessions');
