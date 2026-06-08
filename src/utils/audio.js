@@ -1,12 +1,11 @@
-
-export const playSound = (soundId) => {.
+export const playSound = (soundId) => {
   try {
-    const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
     if (!AudioContextClass) return;
     const ctx = new AudioContextClass();
 
-    if (type === 'sound_zen') {
-      // Timbre/Som ->  Harmonías Sinosas(Sino Budistas / Soothing) Com decaimentos afetuosos (Estilos de Atack: Soft / Warm).
+    if (soundId === 'sound_zen') {
+      // Timbre/Som -> Harmonías Sinosas (Sino Budistas / Soothing) Com decaimentos afetuosos (Estilos de Attack: Soft / Warm).
       const osc1 = ctx.createOscillator();
       const osc2 = ctx.createOscillator();
       const gain = ctx.createGain();
@@ -35,13 +34,13 @@ export const playSound = (soundId) => {.
       osc2.start();
       osc1.stop(ctx.currentTime + 2.1);
       osc2.stop(ctx.currentTime + 2.1);
-    } else if (type === 'sound_retro') {
-      // Timbre/Som Clássicos e Vintages (Sino do Nível/Arcade Retro - Colecionar e 8BIT!). 
+    } else if (soundId === 'sound_retro') {
+      // Timbre/Som Clássicos e Vintage (Sino do Nível/Arcade Retro - Colecionar e 8BIT!)
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
 
       osc.type = 'square';
-      // Estrutura ou Arquitetura retrográfica tonal / Sons Arpégios para Subídas : (C5) ~> (E5) ~> (G5) ~> C6 (Final)
+      // Estrutura ou Arquitetura retrográfica tonal / Sons Arpejados para Subidas: (C5) ~> (E5) ~> (G5) ~> C6 (Final)
       osc.frequency.setValueAtTime(523.25, ctx.currentTime);
       osc.frequency.setValueAtTime(659.25, ctx.currentTime + 0.08);
       osc.frequency.setValueAtTime(783.99, ctx.currentTime + 0.16);
@@ -56,7 +55,7 @@ export const playSound = (soundId) => {.
       osc.start();
       osc.stop(ctx.currentTime + 0.5);
     } else {
-      // Sinos Básicos e Alertativos -> Toque Alto(Padrao) / Formações de Agudezas ("Pling Ping")  P/ Sinais do Timer Modernos. 
+      // Sinos Básicos e Alertativos -> Toque Alto (Padrão) / Formações Agudas ("Pling Ping") para Sinais de Timer Modernos.
       const osc1 = ctx.createOscillator();
       const osc2 = ctx.createOscillator();
       const gain = ctx.createGain();
@@ -67,7 +66,7 @@ export const playSound = (soundId) => {.
       osc1.frequency.setValueAtTime(880, ctx.currentTime + 0.2); // A5
 
       osc2.type = 'sine';
-      osc2.frequency.setValueAtTime(1320, ctx.currentTime); // E6 
+      osc2.frequency.setValueAtTime(1320, ctx.currentTime); // E6
 
       gain.gain.setValueAtTime(0.2, ctx.currentTime);
       gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.8);
@@ -84,13 +83,12 @@ export const playSound = (soundId) => {.
   } catch (error) {
     console.warn('Audio synthesis failed, probably blocked by user gesture:', error);
   }
-}
+};
 
-//  feedback sonoro
-
+// feedback sonoro
 export function playClickFeedback() {
   try {
-    const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
     if (!AudioContextClass) return;
     const ctx = new AudioContextClass();
     const osc = ctx.createOscillator();
@@ -100,7 +98,7 @@ export function playClickFeedback() {
     osc.frequency.setValueAtTime(1200, ctx.currentTime);
     osc.frequency.exponentialRampToValueAtTime(600, ctx.currentTime + 0.04);
     
-    gain.gain.setValueAtTime(0.05, ctx.currentTime); 
+    gain.gain.setValueAtTime(0.05, ctx.currentTime);
     gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.05);
     
     osc.connect(gain);
@@ -109,6 +107,6 @@ export function playClickFeedback() {
     osc.start();
     osc.stop(ctx.currentTime + 0.06);
   } catch (e) {
-    // Engole erros residuais e silenciosamente aborta sem prejudicamentos fatais (Erros do browser ou Interfêrencias do Play/Policy / Mutados).
+    // Engole erros residuais silenciosamente
   }
 }
