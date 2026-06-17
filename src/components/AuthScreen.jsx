@@ -11,6 +11,8 @@ import {
   sendPasswordResetEmail 
 } from 'firebase/auth';
 
+const googleProvider = new GoogleAuthProvider();
+
 export default function AuthScreen({ onBack, onLoginSuccess }) {
   const [isSignUp, setIsSignUp] = useState(false);
   const [isForgotPassword, setIsForgotPassword] = useState(false);
@@ -19,8 +21,6 @@ export default function AuthScreen({ onBack, onLoginSuccess }) {
   const [username, setUsername] = useState('');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState(null);
-
-  const googleProvider = new GoogleAuthProvider();
 
   const handleAuthError = (err) => {
     console.error("Auth error:", err);
@@ -81,25 +81,8 @@ export default function AuthScreen({ onBack, onLoginSuccess }) {
         setLoading(false);
       }
     } else {
-      setTimeout(() => {
-        setLoading(false);
-        if (isSignUp) {
-          setMessage({ text: "Conta demonstrativa criada localmente com sucesso!", type: 'success' });
-          setTimeout(() => {
-            onLoginSuccess({
-              email,
-              displayName: username,
-              uid: `demo-uid-${Date.now()}`
-            });
-          }, 1500);
-        } else {
-          onLoginSuccess({
-            email,
-            displayName: email.split('@')[0],
-            uid: `demo-uid-${Date.now()}`
-          });
-        }
-      }, 1000);
+      setMessage({ text: "Erro de configuração: Firebase não detectado.", type: 'error' });
+      setLoading(false);
     }
   };
 
@@ -109,6 +92,7 @@ export default function AuthScreen({ onBack, onLoginSuccess }) {
     setMessage(null);
 
     if (isConfigured && auth) {
+      googleProvider.setCustomParameters({ prompt: 'select_account' });
       try {
         const result = await signInWithPopup(auth, googleProvider);
         onLoginSuccess({
@@ -118,18 +102,13 @@ export default function AuthScreen({ onBack, onLoginSuccess }) {
         });
       } catch (err) {
         handleAuthError(err);
-      } finally {
         setLoading(false);
+      } finally {
+        // O loading é removido no catch ou no onLoginSuccess/App unmount
       }
     } else {
-      setTimeout(() => {
-        setLoading(false);
-        onLoginSuccess({
-          email: 'eduianbf@gmail.com',
-          displayName: 'Eduardo Ian',
-          uid: 'demo-google-uid-1234'
-        });
-      }, 1000);
+      setMessage({ text: "Erro de configuração: Google Auth não disponível.", type: 'error' });
+      setLoading(false);
     }
   };
 
@@ -156,11 +135,8 @@ export default function AuthScreen({ onBack, onLoginSuccess }) {
         setLoading(false);
       }
     } else {
-      setTimeout(() => {
-        setLoading(false);
-        setMessage({ text: "[Demo-Modo] E-mail de recuperação simulado com sucesso!", type: 'success' });
-        setTimeout(() => setIsForgotPassword(false), 3000);
-      }, 1000);
+      setMessage({ text: "Erro de configuração.", type: 'error' });
+      setLoading(false);
     }
   };
 

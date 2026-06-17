@@ -125,7 +125,6 @@ const [shopItems, setShopItems] = useState(() => {
   const { friends: cloudFriends, requests: pendingRequests } = useFriends(user?.uid);
 
   const [sessionInvites, setSessionInvites] = useState([]);
-  const [friends, setFriends] = useState([]);
 useEffect(() => {
   const saved = localStorage.getItem('foca_shop_items');
   if (saved) {
@@ -245,17 +244,19 @@ useEffect(() => {
     if (!isConfigured || !auth) return;
     const unsubscribe = auth.onAuthStateChanged((firebaseUser) => {
       if (firebaseUser) {
-        setUser({
+        const loggedUser = {
           email: firebaseUser.email || '',
           displayName: firebaseUser.displayName || undefined,
           uid: firebaseUser.uid
-        });
-        localStorage.setItem('foca_user', JSON.stringify({
-          email: firebaseUser.email || '',
-          displayName: firebaseUser.displayName || undefined,
-          uid: firebaseUser.uid
-        }));
-        setScreen('app');
+        };
+        setUser(loggedUser);
+        localStorage.setItem('foca_user', JSON.stringify(loggedUser));
+        
+        // Se já estiver logado (refresh), vai direto. 
+        // Se estiver na tela de auth, deixa o handleLoginSuccess cuidar do sync inicial
+        if (screen !== 'auth') {
+          setScreen('app');
+        }
       } else {
         setUser(null);
         localStorage.removeItem('foca_user');
@@ -278,6 +279,7 @@ useEffect(() => {
           const initialData = {
             userId: uid,
             username: user.displayName || user.email.split('@')[0],
+            email: user.email,
             pet: pet,
             stats: stats,
             shopItems: shopItems,
@@ -366,9 +368,11 @@ useEffect(() => {
         }
         const loadedSessions = [];
         snap.forEach((docSnap) => loadedSessions.push(docSnap.data()));
-        // Privacidade: Filtra para mostrar apenas sessões de amigos ou as próprias
+        // Privacidade: Filtra para mostrar apenas sessões de amigos, as próprias ou as que você já participa
         const filtered = loadedSessions.filter(s => 
-          s.hostId === user.uid || cloudFriends.some(f => f.friendId === s.hostId)
+          s.hostId === user.uid || 
+          cloudFriends.some(f => f.friendId === s.hostId) ||
+          (s.participants && s.participants.some(p => p.uid === user.uid))
         );
         setSocialSessions(filtered);
       }, (err) => handleFirestoreError(err, OperationType.GET, 'social_sessions'));
@@ -376,7 +380,7 @@ useEffect(() => {
       console.error("Failed to setup social sessions subscription", err);
     }
     return () => { if (unsubscribe) unsubscribe(); };
-  }, [user?.uid]);
+  }, [user?.uid, cloudFriends]); // cloudFriends é necessário aqui para a lógica de filtragem
 
   // Escuta convites de sessão
   useEffect(() => {
@@ -443,7 +447,7 @@ useEffect(() => {
         setPet((prev) => {
           if (prev.status === 'dead') return prev;
           const energyLoss = hoursSinceActive * 1.39; // Taxa equilibrada para vida de 72h
-          const finalEnergy = Math.max(0, prev.energy - energyLoss);
+          const finalEnergy = Math.max(0, Math.floor(prev.energy - energyLoss));
           return { ...prev, energy: finalEnergy, status: finalEnergy <= 0 ? 'sleeping' : prev.status };
         });
       }
@@ -744,12 +748,11 @@ useEffect(() => {
     
     if (isConfigured && db && user?.uid) {
       try {
-        // 1. Busca flexível: por e-mail, por username (apelido) ou por ID da conta
+        // 1. Busca flexível: Prioriza o e-mail em minúsculas ou o ID da conta
         const q = query(
           collection(db, 'users'), 
           or(
-            where('email', '==', term),
-            where('username', '==', term),
+            where('email', '==', term.toLowerCase()),
             where('userId', '==', term)
           )
         );
@@ -793,12 +796,27 @@ useEffect(() => {
     return false;
   };
 
+  const handleRemoveFriend = async (friendId) => {
+    if (!isConfigured || !db || !user?.uid) return;
+    try {
+      const friendshipId = [user.uid, friendId].sort().join('_');
+      await deleteDoc(doc(db, 'friendships', friendshipId));
+      triggerAlert("Amizade removida com sucesso.", "info");
+    } catch (err) { 
+      console.error(err);
+      triggerAlert("Erro ao remover amizade.", "error");
+    }
+  };
+
   const handleAcceptFriend = async (friendshipId) => {
     if (!isConfigured || !db) return;
     try {
       await updateDoc(doc(db, 'friendships', friendshipId), { status: 'accepted' });
       triggerAlert("Amizade aceita!", "success");
-    } catch (err) { console.error(err); }
+      } catch (err) { 
+        console.error("Erro ao aceitar amizade:", err);
+        triggerAlert("Não foi possível aceitar a amizade. Verifique sua conexão.", "error");
+      }
   };
 
   const handleDenyFriend = async (friendshipId) => {
@@ -810,11 +828,13 @@ useEffect(() => {
   };
 
   const handleCreateSession = async (title) => {
+    if (!user?.uid) return;
+
     const newSession = {
       id: `session-${Date.now()}`,
       title,
-      hostId: user?.uid || 'user-123',
-      hostName: user?.displayName || username,
+      hostId: user.uid,
+      hostName: username,
       createdAt: new Date().toISOString(),
       lastInteraction: serverTimestamp(),
       isActive: true,
@@ -845,7 +865,9 @@ useEffect(() => {
           const snap = await getDoc(sessionRef);
           if (snap.exists()) {
             const data = snap.data();
-            const updatedParticipants = (data.participants || []).filter(p => p.uid !== user.uid);
+            // Filtro robusto para remover o participante pelo UID
+            const currentParticipants = data.participants || [];
+            const updatedParticipants = currentParticipants.filter(p => p.uid !== user.uid);
             await updateDoc(sessionRef, { participants: updatedParticipants });
           }
         } catch (err) { handleFirestoreError(err, OperationType.WRITE, `social_sessions/${prevActiveId}`); }
@@ -856,16 +878,37 @@ useEffect(() => {
     setActiveSessionId(sessionId);
     if (isConfigured && db && user?.uid) {
       try {
-        await updateDoc(doc(db, 'social_sessions', sessionId), {
-          participants: arrayUnion({ 
+        const sessionRef = doc(db, 'social_sessions', sessionId);
+        const snap = await getDoc(sessionRef);
+        if (snap.exists()) {
+          const data = snap.data();
+          const currentParticipants = data.participants || [];
+          // Evita duplicatas removendo antes de adicionar o novo objeto
+          const withoutMe = currentParticipants.filter(p => p.uid !== user.uid);
+          const updatedParticipants = [...withoutMe, { 
             uid: user.uid, 
             username: user.displayName || username, 
             joinedAt: new Date().toISOString() 
-          })
-        });
+          }];
+          await updateDoc(sessionRef, { participants: updatedParticipants });
+        }
       } catch (err) { handleFirestoreError(err, OperationType.WRITE, `social_sessions/${sessionId}`); }
     }
     triggerAlert('Ingressou na sala conjunta!', 'success');
+  };
+
+  const handleDeleteSession = async (sessionId) => {
+    if (!isConfigured || !db || !user?.uid) return;
+    try {
+      // Apenas desativamos para manter histórico, ou usamos deleteDoc para sumir de vez
+      const sessionRef = doc(db, 'social_sessions', sessionId);
+      const snap = await getDoc(sessionRef);
+      if (snap.exists() && snap.data().hostId === user.uid) {
+        await updateDoc(sessionRef, { isActive: false });
+        setActiveSessionId(null);
+        triggerAlert("Sala de foco encerrada pelo host.", "info");
+      }
+    } catch (err) { console.error(err); }
   };
 
   const handleToggleSessionTimer = async (sessionId, isRunning, timeLeft) => {
@@ -885,7 +928,13 @@ useEffect(() => {
       const sessionRef = doc(db, 'social_sessions', sessionId);
       const snap = await getDoc(sessionRef);
       if (snap.exists()) {
-        const parts = snap.data().participants.filter(p => p.uid !== participantUid);
+        const sessionData = snap.data();
+        // Verificação de segurança: apenas o host pode expulsar
+        if (sessionData.hostId !== user.uid) {
+          triggerAlert("Ação não autorizada.", "error");
+          return;
+        }
+        const parts = sessionData.participants.filter(p => p.uid !== participantUid);
         await updateDoc(sessionRef, { participants: parts });
         triggerAlert("Participante removido.", "info");
       }
@@ -895,9 +944,18 @@ useEffect(() => {
   const handleInviteFriend = async (sessionId, friendId) => {
     if (!isConfigured || !db) return;
     try {
+      const session = socialSessions.find(s => s.id === sessionId);
+      
+      // Apenas o Host pode convidar
+      const isHost = session?.hostId === user.uid;
+
+      if (!isHost) {
+        triggerAlert("Apenas o host pode convidar amigos.", "error");
+        return;
+      }
+
       const friend = cloudFriends.find(f => f.friendId === friendId);
       if (!friend) return;
-      const session = socialSessions.find(s => s.id === sessionId);
       
       await addDoc(collection(db, 'session_invites'), {
         sessionId,
@@ -914,13 +972,20 @@ useEffect(() => {
 
   const handleAcceptSessionInvite = async (invite) => {
     try {
-      await updateDoc(doc(db, 'social_sessions', invite.sessionId), {
-        participants: arrayUnion({ 
+      const sessionRef = doc(db, 'social_sessions', invite.sessionId);
+      const snap = await getDoc(sessionRef);
+      if (snap.exists()) {
+        const data = snap.data();
+        const currentParticipants = data.participants || [];
+        // Remove o usuário se já estiver na lista (para evitar duplicatas) e adiciona novamente
+        const withoutMe = currentParticipants.filter(p => p.uid !== user.uid);
+        const updatedParticipants = [...withoutMe, {
           uid: user.uid, 
           username: username, 
           joinedAt: new Date().toISOString() 
-        })
-      });
+        }];
+        await updateDoc(sessionRef, { participants: updatedParticipants });
+      }
       await deleteDoc(doc(db, 'session_invites', invite.id));
       setActiveSessionId(invite.sessionId);
       triggerAlert(`Ingressou na sala!`, 'success');
@@ -944,6 +1009,7 @@ useEffect(() => {
           const initialData = {
             userId: loggedInUser.uid,
             username: loggedInUser.displayName || loggedInUser.email.split('@')[0],
+            email: loggedInUser.email,
             pet: pet,
             stats: stats,
             shopItems: shopItems,
@@ -971,10 +1037,28 @@ useEffect(() => {
     triggerAlert(`Bem-vindo, ${loggedInUser.displayName || loggedInUser.email}!`, 'success');
   };
 
-  const handleUpdateUsername = (newName) => {
+  const handleUpdateUsername = async (newName) => {
     if (newName.length > 20) return;
     setPet(p => ({ ...p, name: newName }));
     if (user) setUser({ ...user, displayName: newName });
+
+    // Sincroniza o novo apelido na Sala de Foco ativa, se houver
+    if (isConfigured && db && user?.uid && activeSessionId) {
+      try {
+        const sessionRef = doc(db, 'social_sessions', activeSessionId);
+        const snap = await getDoc(sessionRef);
+        if (snap.exists()) {
+          const data = snap.data();
+          const updatedParticipants = data.participants.map(p => 
+            p.uid === user.uid ? { ...p, username: newName } : p
+          );
+          const updates = { participants: updatedParticipants };
+          if (data.hostId === user.uid) updates.hostName = newName;
+          await updateDoc(sessionRef, updates);
+        }
+      } catch (err) { console.error("Erro ao atualizar nome na sessão:", err); }
+    }
+
     triggerAlert(`Nome alterado para "${newName}"!`, 'success');
   };
 
@@ -1120,12 +1204,13 @@ useEffect(() => {
         onOpenMysteryBox={() => handleConsumeItem('mystery_box')}
       />
       <NavigationSidebar
-        isOpen={isNavOpen} onClose={() => setIsNavOpen(false)} userEmail={user?.email || 'eduianbf@gmail.com'}
+        isOpen={isNavOpen} onClose={() => setIsNavOpen(false)} userEmail={user?.email || ''} userId={user?.uid}
         username={user?.displayName || pet.name} onUpdateUsername={handleUpdateUsername}
         pet={pet} stats={stats} shopItems={shopItems} onEquipItem={handleEquipItem} onConsumeItem={handleConsumeItem}
-        friends={cloudFriends} pendingRequests={pendingRequests} onAddFriend={handleAddFriend}
+        friends={cloudFriends} pendingRequests={pendingRequests} onAddFriend={handleAddFriend} onRemoveFriend={handleRemoveFriend}
         onAcceptFriend={handleAcceptFriend} onDenyFriend={handleDenyFriend} socialSessions={socialSessions}
         onCreateSession={handleCreateSession} onJoinSession={handleJoinSession} activeSessionId={activeSessionId}
+        onDeleteSession={handleDeleteSession}
         sessionInvites={sessionInvites} 
         onAcceptSessionInvite={handleAcceptSessionInvite}
         onDeclineSessionInvite={handleDeclineSessionInvite}

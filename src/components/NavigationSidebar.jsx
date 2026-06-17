@@ -11,6 +11,7 @@ export default function NavigationSidebar({
   isOpen,
   onClose,
   userEmail,
+  userId,
   username,
   onUpdateUsername,
   pet,
@@ -20,6 +21,7 @@ export default function NavigationSidebar({
   onConsumeItem,
   friends,
   onAddFriend,
+  onRemoveFriend,
   pendingRequests,
   onAcceptFriend,
   onDenyFriend,
@@ -27,6 +29,7 @@ export default function NavigationSidebar({
   onCreateSession,
   onJoinSession,
   activeSessionId,
+  onDeleteSession,
   onKickParticipant,
   onInviteFriend,
   sessionInvites,
@@ -71,8 +74,15 @@ export default function NavigationSidebar({
   
   // Cálculos Avançados de Analytics
   const bestDayOfWeek = [...stats.weeklyFocus].sort((a, b) => b.minutes - a.minutes)[0];
-  const avgDailyFocus = (stats.weeklyFocus.reduce((acc, curr) => acc + curr.minutes, 0) / 7).toFixed(1);
+  const userWeeklyTotal = stats.weeklyFocus.reduce((acc, curr) => acc + curr.minutes, 0);
+  const avgDailyFocus = (userWeeklyTotal / 7 / 60).toFixed(1); // Média em Horas
   
+  // Lógica para Duelo de Foco (Semanal)
+  const allWeeklyScores = [userWeeklyTotal, ...friends.map(f => f.focusMinutes || 0)];
+  const maxWeeklyScore = Math.max(...allWeeklyScores, 1); // Evita divisão por zero
+
+  const formatMinsToHours = (mins) => (mins / 60).toFixed(1) + 'h';
+
   const bestMonth = [...stats.yearlyFocus].sort((a, b) => b.minutes - a.minutes)[0];
 
   const [newNameInput, setNewNameInput] = useState(username);
@@ -90,11 +100,11 @@ export default function NavigationSidebar({
     onUpdateUsername(newNameInput.trim().substring(0, 20));
   };
 
-  const handleAddFriendSubmit = (e) => {
+  const handleAddFriendSubmit = async (e) => {
     e.preventDefault();
     playClickFeedback();
     if (!newFriendInput.trim()) return;
-    const success = onAddFriend(newFriendInput.trim());
+    const success = await onAddFriend(newFriendInput.trim());
     if (success) {
       setFriendFeedback('Amigo adicionado com sucesso!');
       setNewFriendInput('');
@@ -228,6 +238,14 @@ export default function NavigationSidebar({
                         </div>
                       </div>
 
+                      <div className="p-3.5 rounded-xl bg-brand-bg/40 border border-brand-border space-y-1">
+                        <span className="text-[9px] font-mono uppercase text-brand-text/40 block">Meu ID de Conta</span>
+                        <div className="flex items-center justify-between">
+                          <span className="text-[10px] font-mono text-brand-text/60 truncate mr-2">{userId}</span>
+                          <span className="text-[8px] px-1.5 py-0.5 bg-brand-text/5 rounded text-brand-text/30">ID ÚNICO</span>
+                        </div>
+                      </div>
+
                       <div className="pt-4 border-t border-brand-border space-y-3">
                         <h6 className="text-[10px] font-mono font-bold text-brand-text/30 uppercase tracking-widest">Configurações de Conta</h6>
                         <button 
@@ -273,12 +291,12 @@ export default function NavigationSidebar({
                         <div className="p-4 rounded-2xl bg-brand-bg/40 border border-brand-border flex flex-col gap-1">
                           <Calendar size={14} className="text-blue-400 mb-1" />
                           <span className="text-[10px] text-brand-text/40 uppercase font-bold">Melhor Dia (Semana)</span>
-                          <span className="text-sm font-black text-brand-text">{bestDayOfWeek.day}: {bestDayOfWeek.minutes}m</span>
+                          <span className="text-sm font-black text-brand-text">{bestDayOfWeek.day}: {formatMinsToHours(bestDayOfWeek.minutes)}</span>
                         </div>
                         <div className="p-4 rounded-2xl bg-brand-bg/40 border border-brand-border flex flex-col gap-1">
                           <TrendingUp size={14} className="text-emerald-400 mb-1" />
                           <span className="text-[10px] text-brand-text/40 uppercase font-bold">Média Diária</span>
-                          <span className="text-sm font-black text-brand-text">{avgDailyFocus} min/dia</span>
+                          <span className="text-sm font-black text-brand-text">{avgDailyFocus} horas/dia</span>
                         </div>
                       </div>
 
@@ -293,7 +311,7 @@ export default function NavigationSidebar({
                                   {d.day}
                                 </span>
                                 <span className={`${d.minutes > 0 ? 'text-blue-400 font-black' : 'text-brand-text/20'}`}>
-                                  {d.minutes} min
+                                  {formatMinsToHours(d.minutes)}
                                 </span>
                               </div>
                               <div className="h-2 w-full bg-brand-bg/60 rounded-full overflow-hidden border border-brand-border/30">
@@ -317,16 +335,26 @@ export default function NavigationSidebar({
                            <div className="flex items-center gap-3 bg-blue-500/10 p-3 rounded-xl border border-blue-500/20">
                               <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center font-black text-xs">VOCÊ</div>
                               <div className="flex-1">
-                                 <div className="flex justify-between text-[10px] font-bold mb-1"><span>{username}</span><span>{stats.focusMinutesToday}m</span></div>
-                                 <div className="h-1.5 bg-brand-bg rounded-full overflow-hidden"><motion.div initial={{ width: 0 }} animate={{ width: '65%' }} className="h-full bg-blue-400" /></div>
+                                 <div className="flex justify-between text-[10px] font-bold mb-1">
+                                    <span>{username}</span>
+                                    <span>{formatMinsToHours(userWeeklyTotal)}</span>
+                                 </div>
+                                 <div className="h-1.5 bg-brand-bg rounded-full overflow-hidden">
+                                    <motion.div initial={{ width: 0 }} animate={{ width: `${(userWeeklyTotal / maxWeeklyScore) * 100}%` }} className="h-full bg-blue-400 shadow-[0_0_10px_rgba(59,130,246,0.5)]" />
+                                 </div>
                               </div>
                            </div>
                            {friends.slice(0, 2).map(f => (
                              <div key={f.friendId} className="flex items-center gap-3 bg-brand-bg/40 p-3 rounded-xl border border-brand-border">
                                <div className="w-8 h-8 rounded-full bg-brand-text/10 flex items-center justify-center font-black text-[10px] text-brand-text/40 uppercase">{f.username.substring(0, 2)}</div>
                                <div className="flex-1">
-                                  <div className="flex justify-between text-[10px] font-bold mb-1"><span>{f.username}</span><span>{f.focusMinutes || 0}m</span></div>
-                                  <div className="h-1.5 bg-brand-bg rounded-full overflow-hidden"><div className="h-full bg-brand-text/20" style={{ width: '40%' }} /></div>
+                                  <div className="flex justify-between text-[10px] font-bold mb-1">
+                                     <span>{f.username}</span>
+                                     <span>{formatMinsToHours(f.focusMinutes || 0)}</span>
+                                  </div>
+                                  <div className="h-1.5 bg-brand-bg rounded-full overflow-hidden">
+                                     <div className="h-full bg-brand-text/20 transition-all duration-1000" style={{ width: `${((f.focusMinutes || 0) / maxWeeklyScore) * 100}%` }} />
+                                  </div>
                                </div>
                              </div>
                            ))}
@@ -361,7 +389,7 @@ export default function NavigationSidebar({
                         </div>
 
                         {friends.map((friend, idx) => (
-                          <div key={friend.uid} className="p-3 rounded-xl bg-brand-card/40 border border-brand-border flex items-center justify-between">
+                          <div key={friend.friendId} className="p-3 rounded-xl bg-brand-card/40 border border-brand-border flex items-center justify-between">
                             <div className="flex items-center gap-2.5">
                               <span className="font-mono text-xs text-brand-text/30">#{idx + 2}</span>
                               <div>
@@ -387,7 +415,7 @@ export default function NavigationSidebar({
                             </div>
                           </div>
                           {friends.slice(0, 2).map((fr) => (
-                            <div key={fr.uid} className="space-y-1">
+                            <div key={fr.friendId} className="space-y-1">
                               <div className="flex justify-between text-[10px] font-mono opacity-60">
                                 <span>{fr.username}</span>
                                 <span>{fr.focusMinutes}m / 100m</span>
@@ -452,11 +480,11 @@ export default function NavigationSidebar({
                               {socialSessions.find(s => s.id === activeSessionId)?.participants.map(p => (
                                 <div key={p.uid} className="flex items-center justify-between text-xs font-mono">
                                   <span className="text-brand-text font-bold">
-                                    {p.username} {p.uid === socialSessions.find(s => s.id === activeSessionId)?.hostId ? '(Host)' : ''}
+                                    {p.username} {p.uid === socialSessions.find(s => s.id === activeSessionId)?.hostId ? '(HOST)' : ''}
                                   </span>
                                   <div className="flex items-center gap-2">
                                     <span className="text-blue-400 font-extrabold animate-pulse">● ATIVO</span>
-                                    {socialSessions.find(s => s.id === activeSessionId)?.hostId === pet.userId && p.uid !== pet.userId && (
+                                    {socialSessions.find(s => s.id === activeSessionId)?.hostId === userId && p.uid !== userId && (
                                       <button 
                                         onClick={() => onKickParticipant(activeSessionId, p.uid)}
                                         className="text-rose-500 hover:text-rose-400 p-1"
@@ -470,7 +498,7 @@ export default function NavigationSidebar({
                             </div>
                           </div>
 
-                          {socialSessions.find(s => s.id === activeSessionId)?.hostId === pet.userId && (
+                          {socialSessions.find(s => s.id === activeSessionId)?.hostId === userId && (
                             <div className="p-3.5 rounded-xl border border-brand-border bg-brand-bg/20 space-y-2">
                               <span className="text-[9px] font-mono text-brand-text/40 uppercase font-black block text-blue-400">Convidar Amigos</span>
                               <div className="flex flex-col gap-1.5 max-h-[100px] overflow-y-auto pr-1">
@@ -490,12 +518,23 @@ export default function NavigationSidebar({
                             </div>
                           )}
 
-                          <button
-                            onClick={() => { playClickFeedback(); onJoinSession(''); }}
-                            className="w-full py-2 bg-rose-500/10 hover:bg-rose-500/25 text-rose-400 font-bold text-xs uppercase tracking-wider rounded-xl transition-colors cursor-pointer"
-                          >
-                            Sair Permanentemente da Sala
-                          </button>
+                          <div className="flex flex-col gap-2">
+                            <button
+                              onClick={() => { playClickFeedback(); onJoinSession(''); }}
+                              className="w-full py-2 bg-brand-text/5 hover:bg-brand-text/10 text-brand-text/60 font-bold text-xs uppercase tracking-wider rounded-xl transition-colors cursor-pointer"
+                            >
+                              Sair da Sala
+                            </button>
+                            
+                            {socialSessions.find(s => s.id === activeSessionId)?.hostId === userId && (
+                              <button
+                                onClick={() => { playClickFeedback(); onDeleteSession(activeSessionId); }}
+                                className="w-full py-2 bg-rose-500/10 hover:bg-rose-500/25 text-rose-400 font-bold text-xs uppercase tracking-wider rounded-xl transition-colors cursor-pointer border border-rose-500/20"
+                              >
+                                Encerrar Sala (Host)
+                              </button>
+                            )}
+                          </div>
                         </div>
                       ) : (
                         <div className="space-y-4">
@@ -627,11 +666,11 @@ export default function NavigationSidebar({
                       </div>
 
                       <form onSubmit={handleAddFriendSubmit} className="p-4 rounded-xl bg-brand-text/5 border border-brand-border space-y-3">
-                        <label className="text-[9px] font-mono uppercase font-black text-brand-text/50 block">Adicionar por E-mail ou Apelido</label>
+                        <label className="text-[9px] font-mono uppercase font-black text-brand-text/50 block">Adicionar por E-mail ou ID</label>
                         <div className="flex gap-2">
                           <input
                             type="text"
-                            placeholder="ex: amiguinho@email.com"
+                            placeholder="E-mail ou ID da conta..."
                             value={newFriendInput}
                             onChange={(e) => setNewFriendInput(e.target.value)}
                             className="bg-brand-bg/80 border border-brand-border rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:border-blue-500 text-brand-text flex-1"
@@ -695,11 +734,24 @@ export default function NavigationSidebar({
                               <span className="text-xs font-bold block text-brand-text">{friend.username}</span>
                               <span className="text-[9px] text-brand-text/40 font-mono">Fiel desde o início</span>
                             </div>
-                            <span className={`text-[10px] font-mono px-2 py-0.5 rounded-md ${
-                              friend.status === 'offline' ? 'bg-brand-text/5 text-brand-text/30' : 'bg-blue-500/10 text-blue-400'
-                            }`}>
-                              {friend.status?.toUpperCase() || 'OFFLINE'}
-                            </span>
+                            <div className="flex items-center gap-2">
+                              <span className={`text-[10px] font-mono px-2 py-0.5 rounded-md ${
+                                friend.status === 'offline' ? 'bg-brand-text/5 text-brand-text/30' : 'bg-blue-500/10 text-blue-400'
+                              }`}>
+                                {friend.status?.toUpperCase() || 'OFFLINE'}
+                              </span>
+                              <button
+                                onClick={() => {
+                                  if (window.confirm(`Deseja remover ${friend.username} da sua lista de amigos?`)) {
+                                    onRemoveFriend(friend.friendId);
+                                  }
+                                }}
+                                className="p-1.5 bg-brand-text/5 hover:bg-rose-500/20 text-brand-text/20 hover:text-rose-500 rounded-md transition-all cursor-pointer"
+                                title="Remover Amigo"
+                              >
+                                <UserMinus size={14} />
+                              </button>
+                            </div>
                           </div>
                           ))
                         )}
@@ -724,7 +776,8 @@ export default function NavigationSidebar({
                         <span className="font-mono font-black text-[10px] text-blue-400 uppercase block">Trabalho de Conclusão de Curso (TCC)</span>
                         <div className="grid grid-cols-1 gap-1 leading-normal text-brand-text/80">
                           <p><b>Autor Executivo:</b> Eduardo Ian</p>
-                          <p><b>E-mail Oficial:</b> <a href="mailto:Eduianbf@gmail.com" className="text-blue-400 hover:underline">Eduianbf@gmail.com</a></p>
+                          <p><b>E-mail:</b> <a href="mailto:Eduianbf@gmail.com" className="text-blue-400 hover:underline">Eduianbf@gmail.com</a></p>
+                          <p><b> Telefone </b> <a href="mailto: 41992516118" className="text-blue-400 hover:underline"> (41) 992516118</a></p>
                         </div>
                         <p className="text-brand-text/50 text-[11px] leading-relaxed italic pt-1 border-t border-brand-border">"O Foca Aqui é um projeto experimental projetado como parte da graduação em Analise e Desenvolvimento de sistemas, buscando investigar e neutralizar o vício em dopamina nas redes sociais através de metodologias gamificadas ativas."</p>
                       </div>

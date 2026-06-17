@@ -64,7 +64,7 @@ export default function PetStatus({ pet, shopItems = [], onEquipItem, onConsumeI
     return 'Foca Comum';
   };
 
-  const xpPercentage = Math.round((pet.experience / pet.maxExperience) * 100);
+  const xpPercentage = Math.floor((pet.experience / pet.maxExperience) * 100);
 
   const equippedSkinsAndSounds = shopItems.filter(item => item.purchased && (item.type === 'skin' || item.type === 'sound'));
 
@@ -307,14 +307,14 @@ export default function PetStatus({ pet, shopItems = [], onEquipItem, onConsumeI
               Barra de Energia
             </span>
             <span className={`${pet.energy < 30 ? 'text-red-500 font-extrabold animate-pulse' : 'text-amber-500'} font-bold`}>
-              {pet.energy}% / 100%
+              {Math.round(pet.energy)}% / 100%
             </span>
           </div>
           
           <div className="w-full h-3 bg-brand-bg rounded-lg p-[1px] border border-brand-border overflow-hidden">
             <div
               style={{ 
-                width: `${pet.energy}%`,
+                width: `${Math.floor(pet.energy)}%`,
                 backgroundImage: pet.energy < 30 
                   ? 'linear-gradient(90deg, #ef4444, #f97316)' 
                   : 'linear-gradient(90deg, #f59e0b, #eab308, #10b981)'
