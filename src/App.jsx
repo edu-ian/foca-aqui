@@ -25,7 +25,7 @@ import {
   doc, getDoc, getDocs, setDoc, updateDoc, collection, deleteDoc, or, addDoc,
   onSnapshot, query, where, getDocFromServer, arrayUnion, arrayRemove, serverTimestamp 
 } from 'firebase/firestore';
-import { updatePassword, deleteUser } from 'firebase/auth';
+import { updatePassword, deleteUser, updateProfile } from 'firebase/auth';
 
 // Utilitário auxiliar de normalização recursiva
 function normalizeState(obj) {
@@ -119,35 +119,16 @@ const [shopItems, setShopItems] = useState(() => {
   const [activeSessionId, setActiveSessionId] = useState(null);
 
   // Hook de Presença: Monitora conexão e status 'focusing'
-  usePresence(user?.uid, pet.status === 'focusing' ? 'focusing' : 'online', activeSessionId);
+  // SÓ PASSAMOS O UID SE O FIREBASE ESTIVER CONFIGURADO PARA EVITAR O CRASH "db is null"
+  usePresence(isConfigured ? user?.uid : null, pet.status === 'focusing' ? 'focusing' : 'online', activeSessionId);
 
-  // Hook de Amigos: Sincroniza lista e status online/offline dos outros
-  const { friends: cloudFriends, requests: pendingRequests } = useFriends(user?.uid);
+  // Hook de Amigos: Garantimos fallbacks (arrays vazios) para evitar que o render quebre caso o Firebase esteja offline
+  // SÓ PASSAMOS O UID SE O FIREBASE ESTIVER CONFIGURADO
+  const socialData = useFriends(isConfigured ? user?.uid : null) || {};
+  const cloudFriends = socialData.friends || [];
+  const pendingRequests = socialData.requests || [];
 
   const [sessionInvites, setSessionInvites] = useState([]);
-useEffect(() => {
-  const saved = localStorage.getItem('foca_shop_items');
-  if (saved) {
-    try {
-      const parsed = JSON.parse(saved);
-      // Se qualquer item não tiver a propriedade 'type', substitui tudo
-      if (!parsed.length || !parsed.some(item => item.type)) {
-        console.log("Itens corrompidos detectados. Substituindo pelos dados corretos...");
-        localStorage.setItem('foca_shop_items', JSON.stringify(INITIAL_SHOP_ITEMS));
-        setShopItems([...INITIAL_SHOP_ITEMS]);
-      }
-    } catch (e) {
-      console.error("Erro ao ler localStorage, resetando...", e);
-      localStorage.setItem('foca_shop_items', JSON.stringify(INITIAL_SHOP_ITEMS));
-      setShopItems([...INITIAL_SHOP_ITEMS]);
-    }
-  } else {
-    // Se não tem nada, salva os itens corretos
-    localStorage.setItem('foca_shop_items', JSON.stringify(INITIAL_SHOP_ITEMS));
-    setShopItems([...INITIAL_SHOP_ITEMS]);
-  }
-}, []);
-
   const [socialSessions, setSocialSessions] = useState(() => {
     const saved = localStorage.getItem('foca_sessions');
     return saved ? JSON.parse(saved) : [
@@ -246,7 +227,7 @@ useEffect(() => {
       if (firebaseUser) {
         const loggedUser = {
           email: firebaseUser.email || '',
-          displayName: firebaseUser.displayName || undefined,
+          displayName: firebaseUser.displayName || null,
           uid: firebaseUser.uid
         };
         setUser(loggedUser);
@@ -653,7 +634,12 @@ useEffect(() => {
       if (i.id === itemId) {
         const isConsumable = i.type === 'food' || i.id === 'potion_revive' || i.type === 'mystery_box';
         if (isConsumable) {
-          return { ...i, purchased: true, quantity: (i.quantity || 0) + 1, weeklyPurchasedCount: i.id === 'potion_revive' ? (i.weeklyPurchasedCount || 0) + 1 : i.weeklyPurchasedCount };
+          const updatedItem = { ...i, purchased: true, quantity: (i.quantity || 0) + 1 };
+          // Só atualiza weeklyPurchasedCount se for a poção, evitando undefined nos outros itens
+          if (i.id === 'potion_revive') {
+            updatedItem.weeklyPurchasedCount = (i.weeklyPurchasedCount || 0) + 1;
+          }
+          return updatedItem;
         } else {
           return { ...i, purchased: true };
         }
@@ -1039,8 +1025,31 @@ useEffect(() => {
 
   const handleUpdateUsername = async (newName) => {
     if (newName.length > 20) return;
+
+    // 1. Atualiza estados locais e localStorage para feedback instantâneo
     setPet(p => ({ ...p, name: newName }));
-    if (user) setUser({ ...user, displayName: newName });
+    if (user) {
+      const updatedUser = { ...user, displayName: newName };
+      setUser(updatedUser);
+      localStorage.setItem('foca_user', JSON.stringify(updatedUser));
+    }
+
+    // 2. Persistência no Firebase
+    if (isConfigured && user?.uid) {
+      try {
+        // Atualiza no Firebase Auth
+        if (auth?.currentUser) {
+          await updateProfile(auth.currentUser, { displayName: newName });
+        }
+        // Atualiza no campo raiz do Firestore (importante para busca de amigos)
+        if (db) {
+          const userDocRef = doc(db, 'users', user.uid);
+          await updateDoc(userDocRef, { username: newName });
+        }
+      } catch (err) {
+        console.error("Erro ao persistir novo nome:", err);
+      }
+    }
 
     // Sincroniza o novo apelido na Sala de Foco ativa, se houver
     if (isConfigured && db && user?.uid && activeSessionId) {
@@ -1063,7 +1072,10 @@ useEffect(() => {
   };
 
   const handleUpdatePassword = async (newPassword) => {
-    if (!auth.currentUser) return;
+    if (!auth || !auth.currentUser) {
+      triggerAlert("Autenticação indisponível no momento.", "info");
+      return;
+    }
     try {
       await updatePassword(auth.currentUser, newPassword);
       triggerAlert("Senha atualizada com sucesso!", "success");
@@ -1075,7 +1087,11 @@ useEffect(() => {
   };
 
   const handleDeleteAccount = async () => {
-    if (!auth.currentUser || !window.confirm("TEM CERTEZA? Isso excluirá todos os seus dados permanentemente.")) return;
+    if (!auth || !auth.currentUser) {
+      triggerAlert("Autenticação indisponível no momento.", "info");
+      return;
+    }
+    if (!window.confirm("TEM CERTEZA? Isso excluirá todos os seus dados permanentemente.")) return;
     try {
       const uid = user.uid;
       await deleteUser(auth.currentUser);
@@ -1106,6 +1122,25 @@ useEffect(() => {
   }
   if (screen === 'landing') {
     return <HeroPage onEnterApp={() => setScreen('auth')} />;
+  }
+
+  // Feedback visual caso o Firebase não carregue (evita tela branca)
+  if (!isConfigured && screen === 'app') {
+    return (
+      <div className="min-h-screen bg-brand-bg flex items-center justify-center p-6 text-center">
+        <div className="bg-brand-card p-8 rounded-2xl border border-red-500/30 max-w-md">
+          <h2 className="text-xl font-bold text-white mb-4">Firebase não detectado 🔌</h2>
+          <p className="text-brand-text/60 text-sm mb-6">
+            O Vite não encontrou as chaves no seu arquivo <code className="bg-black/40 px-1 rounded">.env</code>.<br/><br/>
+            Certifique-se de que o arquivo está na raiz do projeto (fora da pasta <code className="bg-black/40 px-1 rounded">src</code>) e que você reiniciou o terminal com <code className="bg-black/40 px-1 rounded">npm run dev</code>.
+          </p>
+          <div className="flex flex-col gap-3">
+            <button onClick={() => window.location.reload()} className="px-6 py-2 bg-blue-500 text-white rounded-xl font-bold uppercase text-xs cursor-pointer">Tentar Novamente</button>
+            <button onClick={() => { localStorage.clear(); window.location.reload(); }} className="text-[10px] text-brand-text/30 hover:underline uppercase tracking-widest cursor-pointer">Limpar Cache Local</button>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (

@@ -97,7 +97,7 @@ export default function AuthScreen({ onBack, onLoginSuccess }) {
         const result = await signInWithPopup(auth, googleProvider);
         onLoginSuccess({
           email: result.user.email || '',
-          displayName: result.user.displayName || undefined,
+          displayName: result.user.displayName || null,
           uid: result.user.uid,
         });
       } catch (err) {
@@ -107,7 +107,7 @@ export default function AuthScreen({ onBack, onLoginSuccess }) {
         // O loading é removido no catch ou no onLoginSuccess/App unmount
       }
     } else {
-      setMessage({ text: "Erro de configuração: Google Auth não disponível.", type: 'error' });
+      setMessage({ text: "Firebase não configurado. Verifique o arquivo .env e o console (F12).", type: 'error' });
       setLoading(false);
     }
   };

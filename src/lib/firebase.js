@@ -1,5 +1,5 @@
 import { initializeApp } from "firebase/app";
-import { getFirestore } from "firebase/firestore";
+import { initializeFirestore } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 import { getDatabase } from "firebase/database";
 
@@ -12,12 +12,38 @@ const firebaseConfig = {
   appId: import.meta.env.VITE_FIREBASE_APP_ID
 };
 
-const app = initializeApp(firebaseConfig);
+// Verificação robusta: a chave deve existir e não ser um valor default ou "undefined" do Vite
+const rawKey = firebaseConfig.apiKey;
+const hasValidKey = !!(rawKey && 
+                      String(rawKey).trim() !== "undefined" && 
+                      String(rawKey).trim().length > 10);
 
-export const db = getFirestore(app);
-export const auth = getAuth(app);
-export const rtdb = getDatabase(app);
-export const isConfigured = !!firebaseConfig.apiKey; 
+let dbInstance = null;
+let authInstance = null;
+let rtdbInstance = null;
+let firebaseInitialized = false;
+
+if (hasValidKey) {
+  try {
+    const app = initializeApp(firebaseConfig);
+    
+    // Configuração Sênior: ignoreUndefinedProperties evita o erro de "Unsupported field value: undefined"
+    dbInstance = initializeFirestore(app, {
+      ignoreUndefinedProperties: true
+    });
+    authInstance = getAuth(app);
+    rtdbInstance = getDatabase(app);
+    firebaseInitialized = true;
+  } catch (error) {
+    console.error("Falha ao inicializar serviços do Firebase:", error);
+    firebaseInitialized = false;
+  }
+}
+
+export const isConfigured = firebaseInitialized;
+export const db = dbInstance;
+export const auth = authInstance;
+export const rtdb = rtdbInstance;
 
 export const handleFirestoreError = (error) => {
   console.error(error);
