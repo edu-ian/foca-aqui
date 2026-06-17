@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
-  X, User, Award, Users, ShoppingBag, Mail, UserPlus, 
-  Check, RefreshCw, Send, Plus, Flame, PlusCircle, ShieldAlert 
+  X, User, Award, Users, ShoppingBag, Mail, UserPlus, UserMinus, BarChart3, Key, Trash,
+  Check, RefreshCw, Send, Plus, Flame, PlusCircle, ShieldAlert, UserCheck, UserX, Calendar, TrendingUp
 } from 'lucide-react';
 import { playClickFeedback } from '../utils/audio';
 import AnalyticsReports from './AnalyticsReports';
@@ -20,10 +20,21 @@ export default function NavigationSidebar({
   onConsumeItem,
   friends,
   onAddFriend,
+  pendingRequests,
+  onAcceptFriend,
+  onDenyFriend,
   socialSessions,
   onCreateSession,
   onJoinSession,
   activeSessionId,
+  onKickParticipant,
+  onInviteFriend,
+  sessionInvites,
+  onAcceptSessionInvite,
+  onDeclineSessionInvite,
+  onUpdatePassword,
+  onDeleteAccount,
+  onSendSupport,
   theme = 'dark'
 }) {
   const [activeTab, setActiveTabState] = useState('profile');
@@ -32,6 +43,7 @@ export default function NavigationSidebar({
     const syncTabFromHash = () => {
       const hash = window.location.hash;
       if (hash === '#/perfil') setActiveTabState('profile');
+      else if (hash === '#/dashboard-stats') setActiveTabState('stats');
       else if (hash === '#/rank') setActiveTabState('rank');
       else if (hash === '#/social') setActiveTabState('social');
       else if (hash === '#/inventario') setActiveTabState('inventory');
@@ -47,6 +59,7 @@ export default function NavigationSidebar({
   const setActiveTab = (tab) => {
     setActiveTabState(tab);
     const hash = tab === 'profile' ? '#/perfil' :
+                 tab === 'stats' ? '#/dashboard-stats' :
                  tab === 'rank' ? '#/rank' :
                  tab === 'social' ? '#/social' :
                  tab === 'inventory' ? '#/inventario' :
@@ -56,6 +69,12 @@ export default function NavigationSidebar({
     }
   };
   
+  // Cálculos Avançados de Analytics
+  const bestDayOfWeek = [...stats.weeklyFocus].sort((a, b) => b.minutes - a.minutes)[0];
+  const avgDailyFocus = (stats.weeklyFocus.reduce((acc, curr) => acc + curr.minutes, 0) / 7).toFixed(1);
+  
+  const bestMonth = [...stats.yearlyFocus].sort((a, b) => b.minutes - a.minutes)[0];
+
   const [newNameInput, setNewNameInput] = useState(username);
   const [newFriendInput, setNewFriendInput] = useState('');
   const [friendFeedback, setFriendFeedback] = useState(null);
@@ -97,6 +116,7 @@ export default function NavigationSidebar({
     e.preventDefault();
     playClickFeedback();
     if (!supportMessage.trim()) return;
+    onSendSupport(supportMessage.trim());
     setSupportSent(true);
     setSupportMessage('');
     setTimeout(() => setSupportSent(false), 4000);
@@ -138,9 +158,10 @@ export default function NavigationSidebar({
               <div className="w-[110px] border-r border-brand-border/50 bg-brand-bg/60 flex flex-col items-center py-4 gap-2.5 shrink-0 select-none">
                 {[
                   { id: 'profile', label: 'Perfil', icon: User },
+                  { id: 'stats', label: 'Dashboard', icon: BarChart3 },
                   { id: 'inventory', label: 'Inventário', icon: ShoppingBag },
                   { id: 'friends', label: 'Amigos', icon: UserPlus },
-                  { id: 'social', label: 'Sessão Conj.', icon: Users },
+                  { id: 'social', label: 'Sala de Foco', icon: Users },
                   { id: 'support', label: 'Suporte', icon: Mail },
                 ].map((item) => {
                   const Icon = item.icon;
@@ -207,13 +228,109 @@ export default function NavigationSidebar({
                         </div>
                       </div>
 
-                      <div className="w-full mt-4">
-                        <AnalyticsReports stats={stats} />
+                      <div className="pt-4 border-t border-brand-border space-y-3">
+                        <h6 className="text-[10px] font-mono font-bold text-brand-text/30 uppercase tracking-widest">Configurações de Conta</h6>
+                        <button 
+                          onClick={() => {
+                            const p = prompt("Digite sua nova senha:");
+                            if (p) onUpdatePassword(p);
+                          }}
+                          className="w-full flex items-center justify-between p-3 rounded-xl bg-brand-bg/40 border border-brand-border text-xs hover:bg-brand-text/5 transition-all"
+                        >
+                          <div className="flex items-center gap-2 text-brand-text/70"><Key size={14} /> Alterar Senha</div>
+                          <Plus size={12} className="opacity-30" />
+                        </button>
+                        <button 
+                          onClick={onDeleteAccount}
+                          className="w-full flex items-center justify-between p-3 rounded-xl bg-red-500/5 border border-red-500/20 text-xs text-red-400 hover:bg-red-500/10 transition-all"
+                        >
+                          <div className="flex items-center gap-2"><Trash size={14} /> Excluir Minha Conta</div>
+                        </button>
                       </div>
 
                       <div className="p-4 rounded-xl border border-blue-500/10 bg-blue-500/5 text-xs text-brand-text/70 flex flex-col gap-1.5">
                         <span className="font-extrabold text-blue-400 uppercase text-[10px]">Evolução e Parcerias</span>
                         <p>Nivele seu mascote completando focos. A cada subida de nível, recompensas e moedas extras são concedidas no seu Dashboard.</p>
+                      </div>
+                    </motion.div>
+                  )}
+
+                  {activeTab === 'stats' && (
+                    <motion.div
+                      key="stats-tab"
+                      initial={{ opacity: 0, x: 10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: -10 }}
+                      className="space-y-6"
+                    >
+                      <div>
+                        <h4 className="text-xs font-mono font-bold text-blue-400 uppercase tracking-widest">CENTRAL DE DADOS</h4>
+                        <h5 className="text-xl font-display font-black text-brand-text">Sua Performance</h5>
+                      </div>
+
+                      {/* GRID DE MÉTRICAS RÁPIDAS */}
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="p-4 rounded-2xl bg-brand-bg/40 border border-brand-border flex flex-col gap-1">
+                          <Calendar size={14} className="text-blue-400 mb-1" />
+                          <span className="text-[10px] text-brand-text/40 uppercase font-bold">Melhor Dia (Semana)</span>
+                          <span className="text-sm font-black text-brand-text">{bestDayOfWeek.day}: {bestDayOfWeek.minutes}m</span>
+                        </div>
+                        <div className="p-4 rounded-2xl bg-brand-bg/40 border border-brand-border flex flex-col gap-1">
+                          <TrendingUp size={14} className="text-emerald-400 mb-1" />
+                          <span className="text-[10px] text-brand-text/40 uppercase font-bold">Média Diária</span>
+                          <span className="text-sm font-black text-brand-text">{avgDailyFocus} min/dia</span>
+                        </div>
+                      </div>
+
+                      {/* GRÁFICO DE ATIVIDADE SEMANAL (MOBILE FRIENDLY) */}
+                      <div className="space-y-4">
+                        <h6 className="text-[10px] font-mono font-black text-brand-text/40 uppercase tracking-widest">Atividade da Semana</h6>
+                        <div className="space-y-3">
+                          {stats.weeklyFocus.map((d, i) => (
+                            <div key={i} className="space-y-1.5">
+                              <div className="flex justify-between items-center text-[10px] font-mono">
+                                <span className={`font-bold ${d.minutes > 0 ? 'text-brand-text' : 'text-brand-text/30'}`}>
+                                  {d.day}
+                                </span>
+                                <span className={`${d.minutes > 0 ? 'text-blue-400 font-black' : 'text-brand-text/20'}`}>
+                                  {d.minutes} min
+                                </span>
+                              </div>
+                              <div className="h-2 w-full bg-brand-bg/60 rounded-full overflow-hidden border border-brand-border/30">
+                                <motion.div 
+                                  initial={{ width: 0 }}
+                                  animate={{ width: `${Math.min(100, (d.minutes / 120) * 100)}%` }}
+                                  className={`h-full rounded-full ${d.minutes > 0 ? 'bg-gradient-to-r from-blue-600 to-blue-400' : 'bg-transparent'}`}
+                                />
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      <AnalyticsReports stats={stats} />
+
+                      {/* COMPARAÇÃO COM AMIGOS */}
+                      <div className="space-y-3">
+                        <h6 className="text-[10px] font-mono font-black text-brand-text/40 uppercase">Duelo de Foco (Semana)</h6>
+                        <div className="space-y-2">
+                           <div className="flex items-center gap-3 bg-blue-500/10 p-3 rounded-xl border border-blue-500/20">
+                              <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center font-black text-xs">VOCÊ</div>
+                              <div className="flex-1">
+                                 <div className="flex justify-between text-[10px] font-bold mb-1"><span>{username}</span><span>{stats.focusMinutesToday}m</span></div>
+                                 <div className="h-1.5 bg-brand-bg rounded-full overflow-hidden"><motion.div initial={{ width: 0 }} animate={{ width: '65%' }} className="h-full bg-blue-400" /></div>
+                              </div>
+                           </div>
+                           {friends.slice(0, 2).map(f => (
+                             <div key={f.friendId} className="flex items-center gap-3 bg-brand-bg/40 p-3 rounded-xl border border-brand-border">
+                               <div className="w-8 h-8 rounded-full bg-brand-text/10 flex items-center justify-center font-black text-[10px] text-brand-text/40 uppercase">{f.username.substring(0, 2)}</div>
+                               <div className="flex-1">
+                                  <div className="flex justify-between text-[10px] font-bold mb-1"><span>{f.username}</span><span>{f.focusMinutes || 0}m</span></div>
+                                  <div className="h-1.5 bg-brand-bg rounded-full overflow-hidden"><div className="h-full bg-brand-text/20" style={{ width: '40%' }} /></div>
+                               </div>
+                             </div>
+                           ))}
+                        </div>
                       </div>
                     </motion.div>
                   )}
@@ -294,47 +411,96 @@ export default function NavigationSidebar({
                       className="space-y-4"
                     >
                       <div>
-                        <h4 className="text-xs font-mono font-bold text-blue-400 uppercase tracking-widest">SESSÕES DE GRUPO</h4>
-                        <h5 className="text-base font-display font-black text-brand-text">Foque Junto com Amigos</h5>
+                        <h4 className="text-xs font-mono font-bold text-blue-400 uppercase tracking-widest">SALAS DE FOCO</h4>
+                        <h5 className="text-base font-display font-black text-brand-text">Foque em Conjunto</h5>
                       </div>
+
+                      {/* Seção de Convites para Salas */}
+                      {sessionInvites && sessionInvites.length > 0 && (
+                        <div className="p-4 rounded-xl bg-blue-600/10 border border-blue-500/30 space-y-3">
+                          <span className="text-[10px] font-mono font-black text-blue-400 uppercase">Convites Pendentes</span>
+                          {sessionInvites.map(inv => (
+                            <div key={inv.id} className="bg-brand-bg/60 p-3 rounded-lg flex items-center justify-between gap-2 border border-blue-500/20">
+                              <div className="min-w-0">
+                                <p className="text-xs font-bold truncate">{inv.sessionTitle}</p>
+                                <p className="text-[9px] text-brand-text/40">De: {inv.fromName}</p>
+                              </div>
+                              <div className="flex gap-1.5 shrink-0">
+                                <button onClick={() => onAcceptSessionInvite(inv)} className="p-1.5 bg-emerald-500/20 text-emerald-400 rounded-md hover:bg-emerald-500/40 transition-all">
+                                  <Check size={14} />
+                                </button>
+                                <button onClick={() => onDeclineSessionInvite(inv.id)} className="p-1.5 bg-rose-500/20 text-rose-400 rounded-md hover:bg-rose-500/40 transition-all">
+                                  <X size={14} />
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
 
                       {activeSessionId ? (
                         <div className="space-y-4">
                           <div className="p-4 rounded-xl bg-indigo-600/10 border border-indigo-500/25 space-y-2">
                             <span className="text-[9px] font-mono uppercase bg-red-500 text-brand-text px-2 py-0.5 rounded font-black tracking-wider">AO VIVO</span>
                             <h6 className="text-sm font-black text-brand-text">Sala: {socialSessions.find(s => s.id === activeSessionId)?.title}</h6>
-                            <p className="text-[11px] text-brand-text/60 leading-relaxed">Você está conectado na sala! Estude simultaneamente em silêncio. Um ping soa quando o ciclo termina.</p>
+                            <p className="text-[11px] text-brand-text/60 leading-relaxed">Você está conectado! O Host controla o tempo para todos.</p>
                           </div>
 
                           <div className="p-3.5 rounded-xl border border-brand-border bg-brand-bg/50 space-y-2">
                             <span className="text-[9px] font-mono text-brand-text/40 uppercase font-black block">PARTICIPANTES ONLINE</span>
                             <div className="space-y-2 max-h-[140px] overflow-y-auto">
-                              <div className="flex items-center justify-between text-xs font-mono">
-                                <span className="text-brand-text font-bold">{username} (Você)</span>
-                                <span className="text-blue-400 font-extrabold animate-pulse">● FOCANDO</span>
-                              </div>
-                              <div className="flex items-center justify-between text-xs font-mono opacity-80">
-                                <span>LucasGamer</span>
-                                <span className="text-amber-500">● PAUSADO</span>
-                              </div>
-                              <div className="flex items-center justify-between text-xs font-mono opacity-80">
-                                <span>Mariana_Estudos</span>
-                                <span className="text-blue-400 font-extrabold animate-pulse">● FOCANDO</span>
-                              </div>
+                              {socialSessions.find(s => s.id === activeSessionId)?.participants.map(p => (
+                                <div key={p.uid} className="flex items-center justify-between text-xs font-mono">
+                                  <span className="text-brand-text font-bold">
+                                    {p.username} {p.uid === socialSessions.find(s => s.id === activeSessionId)?.hostId ? '(Host)' : ''}
+                                  </span>
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-blue-400 font-extrabold animate-pulse">● ATIVO</span>
+                                    {socialSessions.find(s => s.id === activeSessionId)?.hostId === pet.userId && p.uid !== pet.userId && (
+                                      <button 
+                                        onClick={() => onKickParticipant(activeSessionId, p.uid)}
+                                        className="text-rose-500 hover:text-rose-400 p-1"
+                                      >
+                                        <UserMinus size={12} />
+                                      </button>
+                                    )}
+                                  </div>
+                                </div>
+                              ))}
                             </div>
                           </div>
+
+                          {socialSessions.find(s => s.id === activeSessionId)?.hostId === pet.userId && (
+                            <div className="p-3.5 rounded-xl border border-brand-border bg-brand-bg/20 space-y-2">
+                              <span className="text-[9px] font-mono text-brand-text/40 uppercase font-black block text-blue-400">Convidar Amigos</span>
+                              <div className="flex flex-col gap-1.5 max-h-[100px] overflow-y-auto pr-1">
+                                {friends.filter(f => !socialSessions.find(s => s.id === activeSessionId)?.participants.some(p => p.uid === f.friendId)).map(friend => (
+                                  <div key={friend.friendId} className="flex items-center justify-between bg-brand-bg/40 p-2 rounded-lg">
+                                    <span className="text-[10px] font-bold">{friend.username}</span>
+                                    <button 
+                                      onClick={() => onInviteFriend(activeSessionId, friend.friendId)}
+                                      className="p-1 bg-blue-500/20 text-blue-400 rounded hover:bg-blue-500/40"
+                                    >
+                                      <Plus size={10} />
+                                    </button>
+                                  </div>
+                                ))}
+                                {friends.length === 0 && <span className="text-[9px] italic opacity-30">Nenhum amigo para convidar.</span>}
+                              </div>
+                            </div>
+                          )}
 
                           <button
                             onClick={() => { playClickFeedback(); onJoinSession(''); }}
                             className="w-full py-2 bg-rose-500/10 hover:bg-rose-500/25 text-rose-400 font-bold text-xs uppercase tracking-wider rounded-xl transition-colors cursor-pointer"
                           >
-                            Abandonar Sessão Conjunta
+                            Sair Permanentemente da Sala
                           </button>
                         </div>
                       ) : (
                         <div className="space-y-4">
                           <form onSubmit={handleCreateSessionSubmit} className="p-4 rounded-xl bg-brand-text/5 border border-brand-border space-y-3">
-                            <span className="text-[9px] font-mono font-black uppercase text-blue-400 block">Iniciar Nova Sala Co-working</span>
+                            <span className="text-[9px] font-mono font-black uppercase text-blue-400 block">Iniciar Nova Sala de Foco</span>
                             <div className="flex flex-col gap-2">
                               <input
                                 type="text"
@@ -347,13 +513,13 @@ export default function NavigationSidebar({
                                 type="submit"
                                 className="bg-gradient-to-r from-blue-500 to-indigo-600 text-brand-text font-bold text-xs uppercase py-2.5 rounded-lg text-center cursor-pointer transition-all"
                               >
-                                Criar Sala Conjunta
+                                Criar Sala de Foco
                               </button>
                             </div>
                           </form>
 
                           <div className="space-y-2">
-                            <span className="text-[9px] font-mono font-black uppercase text-brand-text/40 block">Salas de Estudo Ativas</span>
+                            <span className="text-[9px] font-mono font-black uppercase text-brand-text/40 block">Salas de Foco Ativas</span>
                             {socialSessions.filter(s => s.isActive).length === 0 ? (
                               <div className="text-center py-6 text-xs text-brand-text/30 font-light italic">
                                 Nenhuma sala ativa no momento. Crie sua própria sala!
@@ -483,20 +649,60 @@ export default function NavigationSidebar({
                         )}
                       </form>
 
+                      {/* Seção de Solicitações Pendentes */}
+                      {pendingRequests && pendingRequests.length > 0 && (
+                        <div className="space-y-3 p-4 rounded-xl bg-amber-500/5 border border-amber-500/20">
+                          <span className="text-[9px] font-mono uppercase font-black text-amber-500 block tracking-widest">
+                            Solicitações de Amizade
+                          </span>
+                          <div className="space-y-2">
+                            {pendingRequests.map((req) => (
+                              <div key={req.friendshipId} className="flex items-center justify-between bg-brand-bg/40 p-2 rounded-lg border border-brand-border/30">
+                                <div className="flex flex-col">
+                                  <span className="text-xs font-bold text-brand-text">{req.username}</span>
+                                  <span className="text-[8px] text-brand-text/40 font-mono">Quer focar com você</span>
+                                </div>
+                                <div className="flex gap-1.5">
+                                  <button
+                                    onClick={() => { playClickFeedback(); onAcceptFriend(req.friendshipId); }}
+                                    className="p-1.5 bg-emerald-500/20 text-emerald-400 rounded-md hover:bg-emerald-500/30 transition-colors"
+                                    title="Aceitar"
+                                  >
+                                    <UserCheck size={14} />
+                                  </button>
+                                  <button
+                                    onClick={() => { playClickFeedback(); onDenyFriend(req.friendshipId); }}
+                                    className="p-1.5 bg-rose-500/20 text-rose-400 rounded-md hover:bg-rose-500/30 transition-colors"
+                                    title="Recusar"
+                                  >
+                                    <UserX size={14} />
+                                  </button>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
                       <div className="space-y-2">
                         <span className="text-[9px] font-mono uppercase text-brand-text/40 block font-bold">Seus Conhecidos</span>
-                        {friends.map((friend) => (
-                          <div key={friend.uid} className="p-3 bg-brand-card border border-brand-border/50 rounded-xl flex items-center justify-between">
+                        {friends.length === 0 ? (
+                          <p className="text-[10px] text-brand-text/30 italic py-4 text-center">Nenhum amigo aceito ainda.</p>
+                        ) : (
+                          friends.map((friend) => (
+                          <div key={friend.friendId} className="p-3 bg-brand-card border border-brand-border/50 rounded-xl flex items-center justify-between">
                             <div>
                               <span className="text-xs font-bold block text-brand-text">{friend.username}</span>
                               <span className="text-[9px] text-brand-text/40 font-mono">Fiel desde o início</span>
                             </div>
-
-                            <span className="text-[10px] font-mono px-2 py-0.5 bg-blue-500/10 text-blue-400 rounded-md">
-                              ONLINE
+                            <span className={`text-[10px] font-mono px-2 py-0.5 rounded-md ${
+                              friend.status === 'offline' ? 'bg-brand-text/5 text-brand-text/30' : 'bg-blue-500/10 text-blue-400'
+                            }`}>
+                              {friend.status?.toUpperCase() || 'OFFLINE'}
                             </span>
                           </div>
-                        ))}
+                          ))
+                        )}
                       </div>
                     </motion.div>
                   )}

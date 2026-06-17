@@ -7,14 +7,11 @@ export default function DashboardHeader({
   theme,
   onToggleTheme,
   streak,
-  userEmail = 'eduianbf@gmail.com',
+  username,
   onLogout,
   onOpenSidebar,
   onOpenShop, // Adicionado aqui para receber a ação do App.jsx
 }) {
-  const nameFromEmail = userEmail ? userEmail.split('@')[0] : 'Produtor';
-  const capitalizedName = nameFromEmail.charAt(0).toUpperCase() + nameFromEmail.slice(1);
-
   const handleToggle = () => {
     playClickFeedback();
     onToggleTheme();
@@ -30,10 +27,13 @@ export default function DashboardHeader({
             playClickFeedback();
             onOpenSidebar();
           }}
-          className="p-3 bg-brand-bg hover:bg-brand-text/5 border border-brand-border rounded-xl text-brand-text flex items-center justify-center cursor-pointer transition-colors"
-          title="Abrir Menu"
+          className="relative group p-3 bg-gradient-to-br from-blue-600 to-indigo-700 border border-blue-400/30 rounded-2xl text-white flex items-center gap-3 cursor-pointer transition-all shadow-lg shadow-blue-900/20 hover:shadow-blue-500/40 hover:-translate-y-0.5 overflow-hidden"
+          title="Centro de Controle"
         >
-          <Menu size={18} />
+          <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity" />
+          <Menu size={20} className="relative z-10" />
+          <span className="hidden md:block text-[10px] font-black uppercase tracking-widest relative z-10">Menu</span>
+          <div className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border-2 border-indigo-700 animate-pulse" />
         </motion.button>
 
         <motion.div 
@@ -41,14 +41,14 @@ export default function DashboardHeader({
           transition={{ repeat: Infinity, duration: 6, ease: "easeInOut" }}
           className="w-12 h-12 flex items-center justify-center shrink-0"
         >
-          <img src="https://i.imgur.com/8NisBqO.png" alt="Foca Aqui" className="w-10 h-10 object-contain" />
+          <img src="https://i.imgur.com/E6ow4Ip.png" alt="Foca Aqui" className="w-10 h-10 object-contain" />
         </motion.div>
         <div>
           <h1 className="text-xl md:text-2xl font-display font-extrabold text-brand-text leading-tight">
             Olá,
           </h1>
           <h2 className="text-base font-medium text-brand-text/60 font-mono tracking-tight leading-none mt-0.5">
-            {capitalizedName}
+            {username}
           </h2>
         </div>
       </div>

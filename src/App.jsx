@@ -19,7 +19,13 @@ import AuthScreen from './components/AuthScreen';
 import NavigationSidebar from './components/NavigationSidebar';
 
 import { isConfigured, db, auth, handleFirestoreError, OperationType } from './lib/firebase';
-import { doc, getDoc, getDocs, setDoc, updateDoc, collection, deleteDoc, onSnapshot, query, where, getDocFromServer } from 'firebase/firestore';
+import { usePresence } from './hooks/usePresence';
+import { useFriends } from './hooks/useFriends';
+import { 
+  doc, getDoc, getDocs, setDoc, updateDoc, collection, deleteDoc, or, addDoc,
+  onSnapshot, query, where, getDocFromServer, arrayUnion, arrayRemove, serverTimestamp 
+} from 'firebase/firestore';
+import { updatePassword, deleteUser } from 'firebase/auth';
 
 // Utilitário auxiliar de normalização recursiva
 function normalizeState(obj) {
@@ -96,14 +102,30 @@ const [shopItems, setShopItems] = useState(() => {
   return freshItems;
 });
 
-  const [friends, setFriends] = useState(() => {
-    const saved = localStorage.getItem('foca_friends');
-    return saved ? JSON.parse(saved) : [
-      { uid: 'friend-1', username: 'Jeferson(teste)', level: 20, coins: 157, focusMinutes: 45 },
-      { uid: 'friend-2', username: 'Mariana_Estudos(teste)', level: 100, coins: 420, focusMinutes: 80 }
-    ];
-  });
-  //  FORÇA A LIMPEZA E RECARGA DOS ITENS DO MERCADO (remova depois que funcionar)
+  // Lógica para a Foca Pular
+  const [petClicks, setPetClicks] = useState(0);
+  const handlePetClick = () => {
+    playClickFeedback();
+    setPetClicks(prev => {
+      if (prev + 1 >= 5) {
+        setPet(p => ({ ...p, isJumping: true }));
+        setTimeout(() => setPet(p => ({ ...p, isJumping: false })), 600);
+        return 0;
+      }
+      return prev + 1;
+    });
+  };
+
+  const [activeSessionId, setActiveSessionId] = useState(null);
+
+  // Hook de Presença: Monitora conexão e status 'focusing'
+  usePresence(user?.uid, pet.status === 'focusing' ? 'focusing' : 'online', activeSessionId);
+
+  // Hook de Amigos: Sincroniza lista e status online/offline dos outros
+  const { friends: cloudFriends, requests: pendingRequests } = useFriends(user?.uid);
+
+  const [sessionInvites, setSessionInvites] = useState([]);
+  const [friends, setFriends] = useState([]);
 useEffect(() => {
   const saved = localStorage.getItem('foca_shop_items');
   if (saved) {
@@ -146,7 +168,6 @@ useEffect(() => {
     ];
   });
 
-  const [activeSessionId, setActiveSessionId] = useState(null);
   const [currentHash, setCurrentHash] = useState(() => window.location.hash || '#/dashboard');
   const [alertNotification, setAlertNotification] = useState(null);
   const lastSyncedRef = React.useRef("");
@@ -164,7 +185,7 @@ useEffect(() => {
   }, [screen]);
 
   const isShopOpen = currentHash === '#/mercado';
-  const isNavOpen = ['#/perfil', '#/rank', '#/social', '#/inventario', '#/amigos', '#/suporte'].includes(currentHash);
+  const isNavOpen = ['#/perfil', '#/dashboard-stats', '#/rank', '#/social', '#/inventario', '#/amigos', '#/suporte'].includes(currentHash);
 
   const setIsShopOpen = (open) => {
     window.location.hash = open ? '/mercado' : '/dashboard';
@@ -182,7 +203,7 @@ useEffect(() => {
     }
   }, [isNavOpen, isShopOpen]);
 
-  const username = user?.displayName || user?.email?.split('@')[0] || pet.name || 'Produtor';
+  const username = pet.name || user?.displayName || user?.email?.split('@')[0] || 'Produtor';
 
   const syncUserToFirestore = async (updatedPet, updatedStats, updatedShop) => {
     if (!isConfigured || !db || !user?.uid) return;
@@ -330,14 +351,50 @@ useEffect(() => {
       const sessionsCollection = collection(db, 'social_sessions');
       const q = query(sessionsCollection, where("isActive", "==", true));
       unsubscribe = onSnapshot(q, (snap) => {
+        if (activeSessionId) {
+          const sessionExists = snap.docs.find(d => d.id === activeSessionId);
+          if (sessionExists) {
+            const sessionData = sessionExists.data();
+            const isStillParticipant = sessionData.participants.some(p => p.uid === user.uid);
+            if (!isStillParticipant) {
+              setActiveSessionId(null);
+              triggerAlert("Você foi removido da sala de foco.", "info");
+            }
+          } else {
+            setActiveSessionId(null);
+          }
+        }
         const loadedSessions = [];
         snap.forEach((docSnap) => loadedSessions.push(docSnap.data()));
-        setSocialSessions(loadedSessions);
+        // Privacidade: Filtra para mostrar apenas sessões de amigos ou as próprias
+        const filtered = loadedSessions.filter(s => 
+          s.hostId === user.uid || cloudFriends.some(f => f.friendId === s.hostId)
+        );
+        setSocialSessions(filtered);
       }, (err) => handleFirestoreError(err, OperationType.GET, 'social_sessions'));
     } catch (err) {
       console.error("Failed to setup social sessions subscription", err);
     }
     return () => { if (unsubscribe) unsubscribe(); };
+  }, [user?.uid]);
+
+  // Escuta convites de sessão
+  useEffect(() => {
+    if (!isConfigured || !db || !user?.uid) return;
+    const q = query(
+      collection(db, 'session_invites'),
+      where('toUid', '==', user.uid),
+      where('status', '==', 'pending')
+    );
+    const unsubscribe = onSnapshot(q, (snap) => {
+      const loadedInvites = [];
+      snap.forEach(d => loadedInvites.push({ id: d.id, ...d.data() }));
+      setSessionInvites(loadedInvites);
+      if (loadedInvites.length > 0) {
+        triggerAlert(`Você tem ${loadedInvites.length} convite(s) para salas de foco!`, 'info');
+      }
+    });
+    return () => unsubscribe();
   }, [user?.uid]);
 
   // Persistência localStorage
@@ -350,7 +407,6 @@ useEffect(() => {
   useEffect(() => { localStorage.setItem('foca_stats', JSON.stringify(stats)); }, [stats]);
   useEffect(() => { localStorage.setItem('foca_pet', JSON.stringify(pet)); }, [pet]);
   useEffect(() => { localStorage.setItem('foca_shop_items', JSON.stringify(shopItems)); }, [shopItems]);
-  useEffect(() => { localStorage.setItem('foca_friends', JSON.stringify(friends)); }, [friends]);
   useEffect(() => { localStorage.setItem('foca_sessions', JSON.stringify(socialSessions)); }, [socialSessions]);
 
   // Alertas
@@ -373,7 +429,7 @@ useEffect(() => {
       const lastActiveTime = lastActive ? new Date(lastActive).getTime() : now;
       const lastReceivedTime = new Date(lastEnergyReceived).getTime();
       const hoursSinceEnergy = (now - lastReceivedTime) / (3600 * 1000);
-      if (hoursSinceEnergy >= 48) {
+      if (hoursSinceEnergy >= 72) {
         setPet((prev) => {
           if (prev.status === 'dead') return prev;
           playSound('sound_zen');
@@ -386,8 +442,8 @@ useEffect(() => {
       if (hoursSinceActive > 0) {
         setPet((prev) => {
           if (prev.status === 'dead') return prev;
-          const energyLoss = hoursSinceActive * 2.1;
-          const finalEnergy = Math.max(0, Math.round(prev.energy - energyLoss));
+          const energyLoss = hoursSinceActive * 1.39; // Taxa equilibrada para vida de 72h
+          const finalEnergy = Math.max(0, prev.energy - energyLoss);
           return { ...prev, energy: finalEnergy, status: finalEnergy <= 0 ? 'sleeping' : prev.status };
         });
       }
@@ -399,9 +455,12 @@ useEffect(() => {
   }, [screen]);
 
   const handleCycleComplete = (mode, minutes) => {
+      if (minutes < 1) return; // Segurança: Se for menos de 1 minuto, ignora recompensas
     const rewardCoins = mode === 'focus' ? minutes : 0;
-    const gainedXp = mode === 'focus' ? 30 : 10;
-    const energyDelta = mode === 'focus' ? 15 : 20;
+     // XP Proporcional: Foco (~1.2 XP/min) | Pausa (2 XP/min)
+    const gainedXp = mode === 'focus' ? Math.floor(minutes * 1.2) : Math.floor(minutes * 2);
+     // Energia Proporcional: Foco (0.6/min) | Pausa (4/min)
+       const energyDelta = mode === 'focus' ? Math.floor(minutes * 0.6) : Math.floor(minutes * 4);
     localStorage.setItem('foca_last_energy_received_time', new Date().toISOString());
     let nextStats;
     setStats((prev) => {
@@ -679,19 +738,75 @@ useEffect(() => {
     }
   };
 
-  const handleAddFriend = (emailOrNick) => {
-    const clearName = emailOrNick.includes('@') ? emailOrNick.split('@')[0] : emailOrNick;
-    if (!clearName.trim()) return false;
-    const newFriend = {
-      uid: `friend-${Date.now()}`,
-      username: clearName.charAt(0).toUpperCase() + clearName.slice(1),
-      level: Math.floor(Math.random() * 8) + 1,
-      coins: Math.floor(Math.random() * 500) + 50,
-      focusMinutes: Math.floor(Math.random() * 90) + 10
-    };
-    setFriends(prev => [newFriend, ...prev]);
-    triggerAlert(`${newFriend.username} agora é seu companheiro de foco.`, 'success');
-    return true;
+  const handleAddFriend = async (searchTerm) => {
+    const term = searchTerm.trim();
+    if (!term) return false;
+    
+    if (isConfigured && db && user?.uid) {
+      try {
+        // 1. Busca flexível: por e-mail, por username (apelido) ou por ID da conta
+        const q = query(
+          collection(db, 'users'), 
+          or(
+            where('email', '==', term),
+            where('username', '==', term),
+            where('userId', '==', term)
+          )
+        );
+        
+        const querySnapshot = await getDocs(q);
+
+        if (querySnapshot.empty) {
+          triggerAlert("Usuário não encontrado. Verifique o e-mail.", "error");
+          return false;
+        }
+
+        const friendData = querySnapshot.docs[0].data();
+        const friendId = querySnapshot.docs[0].id;
+
+        if (friendId === user.uid) {
+          triggerAlert("Você não pode ser seu próprio amigo!", "info");
+          return false;
+        }
+
+        // 2. Cria a amizade (ID único combinando os dois UIDs em ordem alfabética)
+        const friendshipId = [user.uid, friendId].sort().join('_');
+        await setDoc(doc(db, 'friendships', friendshipId), {
+          users: [user.uid, friendId],
+          usernames: {
+            [user.uid]: user.displayName || username,
+            [friendId]: friendData.username || 'Amigo'
+          },
+          createdAt: serverTimestamp(),
+          status: 'pending',
+          requestedBy: user.uid
+        });
+
+        triggerAlert(`Pedido de amizade enviado para ${friendData.username}!`, 'info');
+        return true;
+      } catch (err) { 
+        console.error(err); 
+        triggerAlert("Erro ao adicionar amigo.", "error");
+        return false; 
+      }
+    }
+    return false;
+  };
+
+  const handleAcceptFriend = async (friendshipId) => {
+    if (!isConfigured || !db) return;
+    try {
+      await updateDoc(doc(db, 'friendships', friendshipId), { status: 'accepted' });
+      triggerAlert("Amizade aceita!", "success");
+    } catch (err) { console.error(err); }
+  };
+
+  const handleDenyFriend = async (friendshipId) => {
+    if (!isConfigured || !db) return;
+    try {
+      await deleteDoc(doc(db, 'friendships', friendshipId));
+      triggerAlert("Solicitação removida.", "info");
+    } catch (err) { console.error(err); }
   };
 
   const handleCreateSession = async (title) => {
@@ -701,11 +816,14 @@ useEffect(() => {
       hostId: user?.uid || 'user-123',
       hostName: user?.displayName || username,
       createdAt: new Date().toISOString(),
+      lastInteraction: serverTimestamp(),
       isActive: true,
       timerMode: 'focus',
-      currentTimer: 1500,
-      participants: [{ uid: user?.uid || 'user-123', username: user?.displayName || username, status: 'focusing', joinedAt: new Date().toISOString() }]
+      timerStatus: 'paused', // 'running' ou 'paused'
+      duration: 1500,
+      participants: [{ uid: user?.uid, username: user?.displayName || username, joinedAt: new Date().toISOString() }]
     };
+
     setSocialSessions(prev => [newSession, ...prev]);
     setActiveSessionId(newSession.id);
     if (isConfigured && db && user?.uid) {
@@ -723,12 +841,12 @@ useEffect(() => {
       setActiveSessionId(null);
       if (isConfigured && db && user?.uid && prevActiveId) {
         try {
-          const sessionDocRef = doc(db, 'social_sessions', prevActiveId);
-          const currentSnap = await getDoc(sessionDocRef);
-          if (currentSnap.exists()) {
-            const currentSession = currentSnap.data();
-            const updatedParticipants = currentSession.participants.filter(p => p.uid !== user.uid);
-            await updateDoc(sessionDocRef, { participants: updatedParticipants });
+          const sessionRef = doc(db, 'social_sessions', prevActiveId);
+          const snap = await getDoc(sessionRef);
+          if (snap.exists()) {
+            const data = snap.data();
+            const updatedParticipants = (data.participants || []).filter(p => p.uid !== user.uid);
+            await updateDoc(sessionRef, { participants: updatedParticipants });
           }
         } catch (err) { handleFirestoreError(err, OperationType.WRITE, `social_sessions/${prevActiveId}`); }
       }
@@ -738,17 +856,81 @@ useEffect(() => {
     setActiveSessionId(sessionId);
     if (isConfigured && db && user?.uid) {
       try {
-        const sessionDocRef = doc(db, 'social_sessions', sessionId);
-        const currentSnap = await getDoc(sessionDocRef);
-        if (currentSnap.exists()) {
-          const currentSession = currentSnap.data();
-          const withoutMe = currentSession.participants.filter(p => p.uid !== user.uid);
-          const updatedParticipants = [...withoutMe, { uid: user.uid, username: user.displayName || username, status: 'focusing', joinedAt: new Date().toISOString() }];
-          await updateDoc(sessionDocRef, { participants: updatedParticipants });
-        }
+        await updateDoc(doc(db, 'social_sessions', sessionId), {
+          participants: arrayUnion({ 
+            uid: user.uid, 
+            username: user.displayName || username, 
+            joinedAt: new Date().toISOString() 
+          })
+        });
       } catch (err) { handleFirestoreError(err, OperationType.WRITE, `social_sessions/${sessionId}`); }
     }
     triggerAlert('Ingressou na sala conjunta!', 'success');
+  };
+
+  const handleToggleSessionTimer = async (sessionId, isRunning, timeLeft) => {
+    if (!isConfigured || !db) return;
+    try {
+      await updateDoc(doc(db, 'social_sessions', sessionId), {
+        timerStatus: isRunning ? 'running' : 'paused',
+        duration: timeLeft,
+        lastInteraction: serverTimestamp()
+      });
+    } catch (err) { console.error(err); }
+  };
+
+  const handleKickParticipant = async (sessionId, participantUid) => {
+    if (!isConfigured || !db) return;
+    try {
+      const sessionRef = doc(db, 'social_sessions', sessionId);
+      const snap = await getDoc(sessionRef);
+      if (snap.exists()) {
+        const parts = snap.data().participants.filter(p => p.uid !== participantUid);
+        await updateDoc(sessionRef, { participants: parts });
+        triggerAlert("Participante removido.", "info");
+      }
+    } catch (err) { console.error(err); }
+  };
+
+  const handleInviteFriend = async (sessionId, friendId) => {
+    if (!isConfigured || !db) return;
+    try {
+      const friend = cloudFriends.find(f => f.friendId === friendId);
+      if (!friend) return;
+      const session = socialSessions.find(s => s.id === sessionId);
+      
+      await addDoc(collection(db, 'session_invites'), {
+        sessionId,
+        sessionTitle: session?.title || 'Sala de Foco',
+        fromUid: user.uid,
+        fromName: username,
+        toUid: friendId,
+        status: 'pending',
+        createdAt: serverTimestamp()
+      });
+      triggerAlert(`Convite enviado para ${friend.username}!`, "success");
+    } catch (err) { console.error(err); }
+  };
+
+  const handleAcceptSessionInvite = async (invite) => {
+    try {
+      await updateDoc(doc(db, 'social_sessions', invite.sessionId), {
+        participants: arrayUnion({ 
+          uid: user.uid, 
+          username: username, 
+          joinedAt: new Date().toISOString() 
+        })
+      });
+      await deleteDoc(doc(db, 'session_invites', invite.id));
+      setActiveSessionId(invite.sessionId);
+      triggerAlert(`Ingressou na sala!`, 'success');
+    } catch (err) { console.error(err); }
+  };
+
+  const handleDeclineSessionInvite = async (inviteId) => {
+    try {
+      await deleteDoc(doc(db, 'session_invites', inviteId));
+    } catch (err) { console.error(err); }
   };
 
   const handleLoginSuccess = async (loggedInUser) => {
@@ -796,6 +978,44 @@ useEffect(() => {
     triggerAlert(`Nome alterado para "${newName}"!`, 'success');
   };
 
+  const handleUpdatePassword = async (newPassword) => {
+    if (!auth.currentUser) return;
+    try {
+      await updatePassword(auth.currentUser, newPassword);
+      triggerAlert("Senha atualizada com sucesso!", "success");
+    } catch (err) {
+      if (err.code === 'auth/requires-recent-login') {
+        triggerAlert("Por segurança, faça login novamente para mudar a senha.", "error");
+      }
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    if (!auth.currentUser || !window.confirm("TEM CERTEZA? Isso excluirá todos os seus dados permanentemente.")) return;
+    try {
+      const uid = user.uid;
+      await deleteUser(auth.currentUser);
+      await deleteDoc(doc(db, 'users', uid));
+      setScreen('landing');
+      triggerAlert("Conta excluída.", "info");
+    } catch (err) {
+      if (err.code === 'auth/requires-recent-login') {
+        triggerAlert("Re-autenticação necessária para excluir a conta.", "error");
+      }
+    }
+  };
+
+  const handleSendSupportMessage = async (msg) => {
+    try {
+      await addDoc(collection(db, 'support_tickets'), {
+        userId: user.uid,
+        email: user.email,
+        message: msg,
+        createdAt: serverTimestamp()
+      });
+    } catch (err) { console.error(err); }
+  };
+
   // Renderização condicional de telas
   if (screen === 'auth') {
     return <AuthScreen onBack={() => setScreen('landing')} onLoginSuccess={handleLoginSuccess} />;
@@ -812,7 +1032,7 @@ useEffect(() => {
         <AnimatePresence>
           {alertNotification && (
             <motion.div initial={{ opacity: 0, y: -20, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: -20, scale: 0.95 }}
-              className={`fixed top-4 left-1/2 -translate-x-1/2 z-50 px-6 py-3 rounded-xl border shadow-xl flex items-center gap-2 max-w-md text-xs font-semibold ${alertNotification.type === 'success' ? 'bg-emerald-500 text-[#07091e] border-emerald-400' : 'bg-indigo-600 text-white border-indigo-500'}`}>
+              className={`fixed top-4 left-1/2 -translate-x-1/2 z-[100] px-6 py-3 rounded-xl border shadow-[0_20px_50px_rgba(0,0,0,0.5)] flex items-center gap-2 max-w-md text-xs font-semibold ${alertNotification.type === 'success' ? 'bg-emerald-500 text-[#07091e] border-emerald-400' : 'bg-indigo-600 text-white border-indigo-500'}`}>
               <span>{alertNotification.message}</span>
             </motion.div>
           )}
@@ -827,17 +1047,24 @@ useEffect(() => {
         </motion.div>
         <DashboardHeader
           theme={theme} onToggleTheme={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-          streak={stats.currentStreak} userEmail={user?.email || 'eduianbf@gmail.com'}
+          streak={stats.currentStreak} username={username}
           onOpenSidebar={() => setIsNavOpen(true)} onOpenShop={() => setIsShopOpen(true)}
           onLogout={async () => { if (isConfigured && auth) try { await auth.signOut(); } catch (err) { console.error(err); } setUser(null); localStorage.removeItem('foca_user'); setScreen('landing'); }}
         />
         <div className="space-y-10">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
             <div className="lg:col-span-7 xl:col-span-8 flex flex-col">
-              <PomodoroTimer onCycleComplete={handleCycleComplete} onTimerRunningChange={handleTimerRunningChange} />
+              <PomodoroTimer 
+                onCycleComplete={handleCycleComplete} 
+                onTimerRunningChange={handleTimerRunningChange}
+                activeSessionId={activeSessionId}
+                socialSessions={socialSessions}
+                friends={cloudFriends}
+                currentUser={user}
+              />
             </div>
             <div className="lg:col-span-5 xl:col-span-4 flex flex-col">
-              <PetStatus pet={pet} shopItems={shopItems} onEquipItem={handleEquipItem} onConsumeItem={handleConsumeItem} />
+              <PetStatus pet={pet} shopItems={shopItems} onEquipItem={handleEquipItem} onConsumeItem={handleConsumeItem} onPetClick={handlePetClick} />
             </div>
           </div>
           <div className="py-2 flex items-center justify-between">
@@ -896,8 +1123,14 @@ useEffect(() => {
         isOpen={isNavOpen} onClose={() => setIsNavOpen(false)} userEmail={user?.email || 'eduianbf@gmail.com'}
         username={user?.displayName || pet.name} onUpdateUsername={handleUpdateUsername}
         pet={pet} stats={stats} shopItems={shopItems} onEquipItem={handleEquipItem} onConsumeItem={handleConsumeItem}
-        friends={friends} onAddFriend={handleAddFriend} socialSessions={socialSessions}
+        friends={cloudFriends} pendingRequests={pendingRequests} onAddFriend={handleAddFriend}
+        onAcceptFriend={handleAcceptFriend} onDenyFriend={handleDenyFriend} socialSessions={socialSessions}
         onCreateSession={handleCreateSession} onJoinSession={handleJoinSession} activeSessionId={activeSessionId}
+        sessionInvites={sessionInvites} 
+        onAcceptSessionInvite={handleAcceptSessionInvite}
+        onDeclineSessionInvite={handleDeclineSessionInvite}
+        onUpdatePassword={handleUpdatePassword} onDeleteAccount={handleDeleteAccount}
+        onSendSupport={handleSendSupportMessage}
         theme={theme}
       />
     </div>

@@ -1,6 +1,7 @@
 import { initializeApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
+import { getDatabase } from "firebase/database";
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -15,11 +16,16 @@ const app = initializeApp(firebaseConfig);
 
 export const db = getFirestore(app);
 export const auth = getAuth(app);
-// isConfigured verifica se a API Key existe para garantir que o .env foi carregado
+export const rtdb = getDatabase(app);
 export const isConfigured = !!firebaseConfig.apiKey; 
 
 export const handleFirestoreError = (error) => {
   console.error(error);
 };
 
-export const OperationType = {};
+export const OperationType = {
+  READ: 'read',
+  WRITE: 'write',
+  DELETE: 'delete',
+  GET: 'get'
+};

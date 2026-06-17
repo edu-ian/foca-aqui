@@ -182,7 +182,7 @@ export default function AuthScreen({ onBack, onLoginSuccess }) {
       <div className="w-full max-w-md bg-[#0a0d33] border border-[#F8F6F0]/10 rounded-2xl p-6 md:p-8 shadow-2xl relative z-10 transition-all">
         <div className="flex flex-col items-center text-center mb-8">
           <div className="w-12 h-12 rounded-xl bg-blue-500/10 border border-blue-400/20 flex items-center justify-center text-blue-400 mb-3">
-            <Sparkles size={24} />
+            <img src="https://i.imgur.com/E6ow4Ip.png" alt="Logo" className="w-8 h-8 object-contain" />
           </div>
           <h2 className="font-display font-black text-2xl uppercase tracking-tight text-white mb-1.5">
             {isForgotPassword ? "Recuperar Senha" : isSignUp ? "Fazer Cadastro" : "Iniciar Sessão"}
