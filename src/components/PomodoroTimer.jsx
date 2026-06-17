@@ -1,11 +1,16 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Play, Pause, RotateCcw, Settings, Volume2, Save, ArrowRight } from 'lucide-react';
+import { Play, Pause, RotateCcw, Settings, Volume2, Save, ArrowRight, Users, Radio, ChevronDown, ChevronUp } from 'lucide-react';
 import { playSound, playClickFeedback } from '../utils/audio';
 
 export default function PomodoroTimer({
   onCycleComplete,
   onTimerRunningChange,
+  activeSessionId,
+  socialSessions,
+  friends,
+  currentUser,
+  onToggleSessionTimer
 }) {
   const [durations, setDurations] = useState({
     focus: 25,
@@ -17,6 +22,7 @@ export default function PomodoroTimer({
   const [timeLeft, setTimeLeft] = useState(25 * 60);
   const [isRunning, setIsRunning] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [isSessionCollapsed, setIsSessionCollapsed] = useState(false);
   const [selectedAlarm, setSelectedAlarm] = useState('sound_standard');
 
   const [inputFocus, setInputFocus] = useState(25);
@@ -24,6 +30,35 @@ export default function PomodoroTimer({
   const [inputLong, setInputLong] = useState(15);
 
   const intervalRef = useRef(null);
+
+  const currentSession = socialSessions?.find(s => s.id === activeSessionId);
+  const isHost = currentSession?.hostId === currentUser?.uid;
+
+  // Efeito para sincronizar com a sessão global (Follower)
+  useEffect(() => {
+    if (currentSession && !isHost) {
+      const serverIsRunning = currentSession.timerStatus === 'running';
+      // Se o estado mudou ou o tempo divergiu muito (> 2s), sincroniza
+      if (serverIsRunning !== isRunning) {
+        setIsRunning(serverIsRunning);
+      }
+      if (Math.abs(timeLeft - currentSession.duration) > 2) {
+        setTimeLeft(currentSession.duration);
+      }
+    }
+  }, [currentSession, isHost]);
+  
+  // Filtra participantes que estão online/focando no momento através da presença no RTDB
+  const participantsStatus = currentSession?.participants?.map(p => {
+    if (p.uid === currentUser?.uid) return { ...p, isOnline: true };
+    
+    // Busca o status do amigo na lista de presença real-time
+    const friendPresence = friends?.find(f => f.friendId === p.uid);
+    return {
+      ...p,
+      isOnline: friendPresence?.status === 'online' || friendPresence?.status === 'focusing'
+    };
+  }) || [];
 
   useEffect(() => {
     if (!isRunning) {
@@ -61,8 +96,12 @@ export default function PomodoroTimer({
     setIsRunning(false);
     playSound(selectedAlarm);
     
-    const minutesFocused = durations[mode];
-    onCycleComplete(mode, minutesFocused);
+    // Cálculo do tempo real decorrido em minutos
+    const totalSecondsPlanned = durations[mode] * 60;
+    const actualSecondsSpent = totalSecondsPlanned - timeLeft;
+    const minutesActuallySpent = Math.floor(actualSecondsSpent / 60);
+
+    onCycleComplete(mode, minutesActuallySpent);
     
     if (mode === 'focus') {
       setMode('short');
@@ -75,13 +114,21 @@ export default function PomodoroTimer({
 
   const toggleTimer = () => {
     playClickFeedback();
-    setIsRunning(!isRunning);
+    const nextState = !isRunning;
+    setIsRunning(nextState);
+    if (activeSessionId && isHost) {
+      onToggleSessionTimer(activeSessionId, nextState, timeLeft);
+    }
   };
 
   const resetTimer = () => {
     playClickFeedback();
     setIsRunning(false);
-    setTimeLeft(durations[mode] * 60);
+    const resetTime = durations[mode] * 60;
+    setTimeLeft(resetTime);
+    if (activeSessionId && isHost) {
+      onToggleSessionTimer(activeSessionId, false, resetTime);
+    }
   };
 
   const handleModeChange = (newMode) => {
@@ -155,6 +202,62 @@ export default function PomodoroTimer({
           <Settings size={18} />
         </button>
       </div>
+
+      {/* Widget de Sessão Conjunta */}
+      <AnimatePresence>
+        {currentSession && (
+          <motion.div 
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            className="w-full mb-6 overflow-hidden"
+          >
+            <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-3 flex flex-col gap-2">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-blue-400">
+                  <Radio size={14} className="animate-pulse" />
+                  <span className="text-[10px] font-bold uppercase tracking-tighter">Sala de Foco Ativa</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className="text-[10px] text-brand-text/40 font-mono truncate max-w-[120px] italic">
+                    "{currentSession.title}"
+                  </span>
+                  <button 
+                    onClick={() => setIsSessionCollapsed(!isSessionCollapsed)}
+                    className="text-brand-text/40 hover:text-brand-text transition-colors"
+                  >
+                    {isSessionCollapsed ? <ChevronDown size={14} /> : <ChevronUp size={14} />}
+                  </button>
+                  {!isHost && (
+                    <span className="text-[8px] bg-brand-text/5 text-brand-text/40 px-1.5 py-0.5 rounded border border-brand-border">
+                      MODO SEGUIDOR
+                    </span>
+                  )}
+                </div>
+              </div>
+              
+              {!isSessionCollapsed && (
+                <motion.div 
+                  initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+                  className="flex flex-wrap gap-2"
+                >
+                  {participantsStatus.map(p => (
+                    <div 
+                      key={p.uid}
+                      className={`flex items-center gap-1.5 px-2 py-1 rounded-full border text-[9px] font-bold transition-all ${
+                        p.isOnline ? 'bg-blue-500/20 border-blue-400/30 text-blue-200' : 'bg-brand-bg/40 border-brand-border text-brand-text/30'
+                      }`}
+                    >
+                      <div className={`w-1 h-1 rounded-full ${p.isOnline ? 'bg-blue-400 animate-ping' : 'bg-brand-text/20'}`} />
+                      {p.username}
+                    </div>
+                  ))}
+                </motion.div>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <AnimatePresence mode="wait">
         {!showSettings ? (

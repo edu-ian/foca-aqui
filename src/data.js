@@ -165,10 +165,10 @@ export const INITIAL_SHOP_ITEMS = [
   },
 ];
 
-// 🔁 Tarefas INICIAIS – AGORA COMEÇAM VAZIAS
+
 export const INITIAL_TASKS = [];
 
-// 🔁 Estatísticas INICIAIS – ZERADAS: sem dinheiro, sem streak, sem minutos
+// Estatísticas INICIAIS – ZERADAS: sem dinheiro, sem streak, sem minutos
 export const INITIAL_STATS = {
   coins: 0,
   focusMinutesToday: 0,

@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Heart, Activity, Star, Shield, Rocket, Sparkles, Volume2, Bell, Palette, PackageOpen, Zap, Trash2 } from 'lucide-react';
 import { playClickFeedback } from '../utils/audio';
 
-export default function PetStatus({ pet, shopItems = [], onEquipItem, onConsumeItem }) {
+export default function PetStatus({ pet, shopItems = [], onEquipItem, onConsumeItem, onPetClick }) {
   const [isBlinking, setIsBlinking] = useState(false);
   const [clickCount, setClickCount] = useState(0);
   const [floatingHearts, setFloatingHearts] = useState([]);
@@ -17,7 +17,7 @@ export default function PetStatus({ pet, shopItems = [], onEquipItem, onConsumeI
   }, []);
 
   const getStatusText = () => {
-    if (pet.status === 'dead') return 'Oh não! Sua foca faleceu por falta de energia (48h sem uso). Use uma Poção de Reviver!';
+    if (pet.status === 'dead') return 'Oh não! Sua foca faleceu por falta de energia (72h sem uso). Use uma Poção de Reviver!';
     if (pet.status === 'focusing') return 'Focada e concentrada!';
     if (pet.status === 'sleeping') return 'Cochilando...';
     if (pet.status === 'happy') return 'Super feliz e animada!';
@@ -28,6 +28,7 @@ export default function PetStatus({ pet, shopItems = [], onEquipItem, onConsumeI
   const handlePetClick = (e) => {
     if (pet.status === 'dead') return;
     playClickFeedback();
+    if (onPetClick) onPetClick(e);
     
     setClickCount((c) => c + 1);
 
@@ -63,17 +64,17 @@ export default function PetStatus({ pet, shopItems = [], onEquipItem, onConsumeI
     return 'Foca Comum';
   };
 
-  const xpPercentage = Math.round((pet.experience / pet.maxExperience) * 100);
+  const xpPercentage = Math.floor((pet.experience / pet.maxExperience) * 100);
 
   const equippedSkinsAndSounds = shopItems.filter(item => item.purchased && (item.type === 'skin' || item.type === 'sound'));
 
   const getBodyColor = () => {
-    if (pet.status === 'dead') return '#94a3b8';
+    if (pet.status === 'dead') return '#475569';
     return '#e2e8f0';
   };
 
   const getBodyDarkColor = () => {
-    if (pet.status === 'dead') return '#64748b';
+    if (pet.status === 'dead') return '#1e293b';
     return '#94a3b8';
   };
 
@@ -129,20 +130,22 @@ export default function PetStatus({ pet, shopItems = [], onEquipItem, onConsumeI
           whileHover={pet.status !== 'dead' ? { scale: 1.05 } : {}}
           whileTap={pet.status !== 'dead' ? { scale: 0.95, rotate: [0, -3, 3, 0] } : {}}
           animate={
-            pet.status === 'dead'
-              ? { y: [0, 1, 0], rotate: [0.5, -0.5, 0.5] }
-              : pet.status === 'focusing'
-              ? { y: [0, -3, 0], scale: [1, 1.02, 1] }
-              : pet.status === 'happy'
-              ? { y: [0, -12, 0], rotate: [0, 8, -8, 0] }
-              : pet.status === 'sleeping'
-              ? { scale: [0.98, 1, 0.98], y: [0, 1, 0] }
-              : { y: [0, -4, 0] }
+          pet.isJumping 
+            ? { y: [0, -40, 0], scale: [1, 1.15, 1], rotate: [0, 12, -12, 0] }
+            : pet.status === 'dead'
+            ? { y: [0, 1, 0], rotate: [0.5, -0.5, 0.5] }
+            : pet.status === 'focusing'
+            ? { y: [0, -3, 0], scale: [1, 1.02, 1] }
+            : pet.status === 'happy'
+            ? { y: [0, -12, 0], rotate: [0, 8, -8, 0] }
+            : pet.status === 'sleeping'
+            ? { scale: [0.98, 1, 0.98], y: [0, 1, 0] }
+            : { y: [0, -4, 0] }
           }
           transition={{
-            repeat: Infinity,
-            duration: pet.status === 'dead' ? 4 : pet.status === 'sleeping' ? 3.2 : pet.status === 'happy' ? 0.7 : 2.5,
-            ease: "easeInOut"
+          repeat: pet.isJumping ? 0 : Infinity,
+          duration: pet.isJumping ? 0.6 : (pet.status === 'dead' ? 4 : pet.status === 'sleeping' ? 3.2 : pet.status === 'happy' ? 0.7 : 2.5),
+          ease: pet.isJumping ? "easeOut" : "easeInOut"
           }}
           className="w-36 h-36 relative cursor-pointer"
         >
@@ -304,14 +307,14 @@ export default function PetStatus({ pet, shopItems = [], onEquipItem, onConsumeI
               Barra de Energia
             </span>
             <span className={`${pet.energy < 30 ? 'text-red-500 font-extrabold animate-pulse' : 'text-amber-500'} font-bold`}>
-              {pet.energy}% / 100%
+              {Math.round(pet.energy)}% / 100%
             </span>
           </div>
           
           <div className="w-full h-3 bg-brand-bg rounded-lg p-[1px] border border-brand-border overflow-hidden">
             <div
               style={{ 
-                width: `${pet.energy}%`,
+                width: `${Math.floor(pet.energy)}%`,
                 backgroundImage: pet.energy < 30 
                   ? 'linear-gradient(90deg, #ef4444, #f97316)' 
                   : 'linear-gradient(90deg, #f59e0b, #eab308, #10b981)'

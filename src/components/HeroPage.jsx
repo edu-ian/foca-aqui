@@ -60,7 +60,7 @@ export default function HeroPage({ onEnterApp }) {
             className="flex items-center gap-2.5 cursor-pointer"
             onClick={handleStart}
           >
-            <img src="/logo.png" alt="Foca Aqui Logo" className="h-8 w-auto object-contain" />
+            <img src="https://i.imgur.com/E6ow4Ip.png" alt="Foca Aqui Logo" className="h-8 w-auto object-contain" />
             <span className="font-display text-lg font-bold tracking-tight uppercase select-none">
               Foca Aqui
             </span>
@@ -161,24 +161,7 @@ export default function HeroPage({ onEnterApp }) {
         >
           <div className="absolute inset-0 rounded-full bg-blue-500/20 border border-blue-500/40 animate-pulse scale-110" />
           
-          <svg viewBox="0 0 100 100" className="w-full h-full drop-shadow-[0_10px_30px_rgba(59,130,246,0.3)]">
-            <ellipse cx="50" cy="55" rx="35" ry="25" fill="#f1f5f9" />
-            <line x1="22" y1="58" x2="10" y2="56" stroke="#94a3b8" strokeWidth="1.5" />
-            <line x1="22" y1="62" x2="11" y2="64" stroke="#94a3b8" strokeWidth="1.5" />
-            <line x1="78" y1="58" x2="90" y2="56" stroke="#94a3b8" strokeWidth="1.5" />
-            <line x1="78" y1="62" x2="89" y2="64" stroke="#94a3b8" strokeWidth="1.5" />
-            <path d="M12 60 Q 2 65 15 72" fill="#e2e8f0" />
-            <path d="M88 60 Q 98 65 85 72" fill="#e2e8f0" />
-            <path d="M35 63 Q 50 71 65 63" fill="none" stroke="#eab308" strokeWidth="4" strokeLinecap="round" />
-            <circle cx="33" cy="58" r="4.5" fill="#fda4af" />
-            <circle cx="67" cy="58" r="4.5" fill="#fda4af" />
-            <circle cx="40" cy="52" r="3.5" fill="#0f172a" />
-            <circle cx="39.2" cy="50.5" r="1.2" fill="#ffffff" />
-            <circle cx="60" cy="52" r="3.5" fill="#0f172a" />
-            <circle cx="59.2" cy="50.5" r="1.2" fill="#ffffff" />
-            <ellipse cx="50" cy="56" rx="4.5" ry="3.2" fill="#1e293b" />
-            <path d="M47 59 C 48 61 50 61 50 59 C 50 61 52 61 53 59" fill="none" stroke="#1e293b" strokeWidth="2" strokeLinecap="round" />
-          </svg>
+          <img src="https://i.imgur.com/E6ow4Ip.png" alt="Mascote Foca" className="w-full h-full object-contain drop-shadow-[0_10px_30px_rgba(59,130,246,0.35)]" />
           
           <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 px-3 py-1 bg-yellow-400 text-slate-900 border-2 border-[#00022f] text-[10px] font-extrabold uppercase rounded-full shadow-lg">
             Oi, eu sou a Foca!
@@ -430,15 +413,7 @@ export default function HeroPage({ onEnterApp }) {
             </div>
 
             <div className="w-40 h-40 relative mb-6">
-              <svg viewBox="0 0 100 100" className="w-full h-full drop-shadow-[0_8px_20px_rgba(59,130,246,0.2)]">
-                <ellipse cx="50" cy="55" rx="35" ry="25" fill="#f1f5f9" />
-                <rect x="25" y="42" width="50" height="20" rx="6" fill="#0f172a" />
-                <rect x="35" y="47" width="30" height="10" rx="3" fill="#f1f5f9" />
-                <circle cx="42" cy="52" r="2.5" fill="#0f172a" />
-                <circle cx="58" cy="52" r="2.5" fill="#0f172a" />
-                <line x1="22" y1="58" x2="10" y2="56" stroke="#94a3b8" strokeWidth="1" />
-                <line x1="78" y1="58" x2="90" y2="56" stroke="#94a3b8" strokeWidth="1" />
-              </svg>
+              <img src="https://i.imgur.com/8NisBqO.png" alt="Mascote Foca Preview" className="w-full h-full object-contain drop-shadow-lg" />
             </div>
 
             <h3 className="font-display font-bold text-xl mb-1 flex items-center gap-1.5 justify-center">
@@ -575,7 +550,7 @@ export default function HeroPage({ onEnterApp }) {
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-lg bg-[#F8F6F0] flex items-center justify-center text-[#00022f]">
-              <Timer size={18} strokeWidth={2.5} />
+              <img src="https://i.imgur.com/E6ow4Ip.png" alt="Logo" className="w-6 h-6 object-contain" />
             </div>
             <span className="font-display font-extrabold text-lg">Foca Aqui</span>
           </div>

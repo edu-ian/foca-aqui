@@ -7,14 +7,11 @@ export default function DashboardHeader({
   theme,
   onToggleTheme,
   streak,
-  userEmail = 'eduianbf@gmail.com',
+  username,
   onLogout,
   onOpenSidebar,
   onOpenShop, // Adicionado aqui para receber a ação do App.jsx
 }) {
-  const nameFromEmail = userEmail ? userEmail.split('@')[0] : 'Produtor';
-  const capitalizedName = nameFromEmail.charAt(0).toUpperCase() + nameFromEmail.slice(1);
-
   const handleToggle = () => {
     playClickFeedback();
     onToggleTheme();
@@ -41,14 +38,14 @@ export default function DashboardHeader({
           transition={{ repeat: Infinity, duration: 6, ease: "easeInOut" }}
           className="w-12 h-12 flex items-center justify-center shrink-0"
         >
-          <img src="https://i.imgur.com/8NisBqO.png" alt="Foca Aqui" className="w-10 h-10 object-contain" />
+          <img src="https://i.imgur.com/E6ow4Ip.png" alt="Foca Aqui" className="w-10 h-10 object-contain" />
         </motion.div>
         <div>
           <h1 className="text-xl md:text-2xl font-display font-extrabold text-brand-text leading-tight">
             Olá,
           </h1>
           <h2 className="text-base font-medium text-brand-text/60 font-mono tracking-tight leading-none mt-0.5">
-            {capitalizedName}
+            {username || 'Produtor'}
           </h2>
         </div>
       </div>
